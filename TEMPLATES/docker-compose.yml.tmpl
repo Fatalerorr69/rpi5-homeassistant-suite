@@ -1,0 +1,12 @@
+version: '3'
+services:
+  homeassistant:
+    container_name: homeassistant
+    image: ghcr.io/home-assistant/home-assistant:stable
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - /mnt/vm:/mnt/vm
+      - /mnt/nas:/mnt/nas
+      - /srv/devtools:/srv/devtools
+      - /etc/localtime:/etc/localtime:ro

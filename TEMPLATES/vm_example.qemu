@@ -1,0 +1,2 @@
+# Vzorový obraz QEMU pro testování VM
+# Uložit do /mnt/vm/ a spustit pomocí qemu-system-aarch64
