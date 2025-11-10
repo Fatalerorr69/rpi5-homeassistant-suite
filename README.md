@@ -6,7 +6,7 @@ Kompletní sada nástrojů pro instalaci a správu Home Assistant na Raspberry P
 
 ```bash
 # Stažení repozitáře
-git clone https://github.com/yourusername/rpi5-homeassistant-suite.git
+git clone https://github.com/Fatalerorr69/rpi5-homeassistant-suite.git
 cd rpi5-homeassistant-suite
 
 # Spuštění hlavního instalačního skriptu
