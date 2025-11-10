@@ -1,5 +1,5 @@
 #!/bin/bash
-# MASTER INSTALAČNÍ SKRIPT - RPi5 Home Assistant Suite
+# MASTER INSTALAČNÍ SKRIPT - RPi5 Home Assistant Suite - OPRAVENÁ VERZE
 
 set -euo pipefail
 
@@ -13,35 +13,47 @@ log() { echo -e "${GREEN}[$(date +%T)]${NC} $1"; }
 warn() { echo -e "${YELLOW}[$(date +%T)]${NC} $1"; }
 err() { echo -e "${RED}[$(date +%T)]${NC} $1"; }
 
+# Funkce pro kontrolu a opravu instalace
+check_hass_supervised() {
+    if ! command -v ha &> /dev/null; then
+        warn "Home Assistant Supervised není nainstalován, spouštím instalaci..."
+        bash INSTALLATION/install_ha_complete.sh
+    else
+        log "Home Assistant Supervised je nainstalován"
+    fi
+}
+
 # Hlavní menu
 show_menu() {
     echo "=========================================="
     echo "🏠 RPi5 HOME ASSISTANT SUITE - INSTALACE"
     echo "=========================================="
     echo "1) Kompletní instalace (doporučeno)"
-    echo "2) Pouze Home Assistant"
+    echo "2) Pouze Home Assistant Supervised"
     echo "3) Pouze MHS35 displej"
     echo "4) Diagnostika systému"
     echo "5) Optimalizace úložišť"
     echo "6) Oprava problémů"
-    echo "7) Ukončit"
+    echo "7) Nastavení NAS"
+    echo "8) Ukončit"
     echo "=========================================="
 }
 
 main() {
     while true; do
         show_menu
-        read -p "Vyberte možnost [1-7]: " choice
+        read -p "Vyberte možnost [1-8]: " choice
         
         case $choice in
             1)
                 log "Spouštím KOMPLETNÍ INSTALACI..."
                 bash INSTALLATION/install_ha_complete.sh
-                bash HARDWARE/one_step_fullsuite_starkos_mhs35_interactive_auto.sh
+                bash POST_INSTALL/install_addons.sh
                 bash POST_INSTALL/setup_gaming_services.sh
+                bash POST_INSTALL/setup_nas.sh
                 ;;
             2)
-                log "Instalace HOME ASSISTANT..."
+                log "Instalace HOME ASSISTANT SUPERVISED..."
                 bash INSTALLATION/install_ha_complete.sh
                 ;;
             3)
@@ -60,10 +72,14 @@ main() {
                 ;;
             6)
                 log "OPRAVA problémů..."
+                check_hass_supervised
                 python3 DIAGNOSTICS/repair_homeassistant.py
-                bash INSTALLATION/quick_fix_docker_compose.sh
                 ;;
             7)
+                log "NASTAVENÍ NAS..."
+                bash POST_INSTALL/setup_nas.sh
+                ;;
+            8)
                 log "Ukončuji..."
                 exit 0
                 ;;
