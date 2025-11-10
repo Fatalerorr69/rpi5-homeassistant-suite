@@ -1,0 +1,10 @@
+energy:
+  - name: "House Energy"
+    source: sensor.total_energy_consumption
+
+sensor:
+  - platform: mqtt
+    name: "Total Energy Consumption"
+    state_topic: "home/energy/total"
+    unit_of_measurement: "kWh"
+    device_class: energy

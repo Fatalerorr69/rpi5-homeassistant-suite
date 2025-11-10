@@ -1,0 +1,14 @@
+gaming_pc:
+  sensor:
+    - platform: command_line
+      name: "Gaming PC Status"
+      command: "ping -c 1 192.168.1.50 | grep 'bytes from' | wc -l"
+      unit_of_measurement: "reachable"
+      scan_interval: 30
+
+  binary_sensor:
+    - platform: ping
+      name: "Gaming PC Online"
+      host: 192.168.1.50
+      count: 2
+      scan_interval: 30

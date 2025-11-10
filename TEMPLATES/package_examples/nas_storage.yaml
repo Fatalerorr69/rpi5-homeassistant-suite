@@ -1,0 +1,14 @@
+nas:
+  sensor:
+    - platform: rest
+      name: "NAS Storage Usage"
+      resource: "http://192.168.1.100:5000/api/storage"
+      value_template: "{{ value_json.used_percent }}"
+      unit_of_measurement: "%"
+
+  binary_sensor:
+    - platform: ping
+      name: "NAS Connection"
+      host: 192.168.1.100
+      count: 3
+      scan_interval: 60
