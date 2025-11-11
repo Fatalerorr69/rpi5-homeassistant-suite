@@ -371,7 +371,9 @@ show_menu() {
     echo "6) Kontrola YAML a skriptů"
     echo "7) Optimalizace úložišť"
     echo "8) Oprava problémů"
-    echo "9) Ukončit"
+    echo "9) Kontrola systémových souborů"
+    echo "10) Vybrat verzi instalace"
+    echo "11) Ukončit"
     echo "=========================================="
 }
 
@@ -387,7 +389,7 @@ main() {
     
     while true; do
         show_menu
-        read -p "Vyberte možnost [1-9]: " choice
+        read -p "Vyberte možnost [1-11]: " choice
         
         case $choice in
             1)
@@ -428,6 +430,26 @@ main() {
                 read -p "Stiskněte Enter pro pokračování..."
                 ;;
             9)
+                log "Spuštění kontroly systémových souborů..."
+                if [ -x "./scripts/system_check.sh" ]; then
+                    ./scripts/system_check.sh
+                else
+                    log "❌ system_check.sh nebyl nalezen"
+                fi
+                ;;
+            10)
+                log "Výběr verze instalace..."
+                if [ -x "./scripts/system_check.sh" ]; then
+                    version=$("./scripts/system_check.sh" 9 2>/dev/null || echo "")
+                    if [ -n "$version" ]; then
+                        log "Vybrána verze: $version"
+                    fi
+                else
+                    log "❌ system_check.sh nebyl nalezen"
+                fi
+                read -p "Stiskněte Enter pro pokračování..."
+                ;;
+            11)
                 log "Ukončování..."
                 exit 0
                 ;;

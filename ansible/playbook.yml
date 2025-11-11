@@ -1,0 +1,149 @@
+---
+# Ansible playbook for provisioning RPi5 Home Assistant Suite
+# Usage: ansible-playbook -i inventory.ini playbook.yml
+
+- name: Setup Home Assistant Suite on RPi5
+  hosts: ha_servers
+  become: yes
+  vars:
+    ha_user: pi
+    ha_home: /home/{{ ha_user }}
+    repo_path: "{{ ha_home }}/rpi5-homeassistant-suite"
+    docker_compose_dir: "{{ repo_path }}"
+
+  pre_tasks:
+    - name: Update system packages
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+  tasks:
+    - name: Install system dependencies
+      apt:
+        name:
+          - curl
+          - wget
+          - git
+          - jq
+          - python3
+          - python3-pip
+          - python3-venv
+          - python3-yaml
+          - docker.io
+          - docker-compose
+          - openssh-server
+          - rsync
+          - tar
+          - gzip
+          - samba
+          - samba-common-bin
+          - cifs-utils
+          - nfs-common
+          - systemd-resolved
+          - dbus
+          - network-manager
+          - apparmor
+          - apparmor-utils
+        state: present
+
+    - name: Add user to docker group
+      user:
+        name: "{{ ha_user }}"
+        groups: docker,dialout
+        append: yes
+
+    - name: Enable Docker service
+      systemd:
+        name: docker
+        enabled: yes
+        state: started
+
+    - name: Clone/update repository
+      git:
+        repo: "https://github.com/Fatalerorr69/rpi5-homeassistant-suite.git"
+        dest: "{{ repo_path }}"
+        version: main
+        update: yes
+      become_user: "{{ ha_user }}"
+
+    - name: Set permissions on scripts
+      file:
+        path: "{{ repo_path }}/{{ item }}"
+        mode: "0755"
+      loop:
+        - install.sh
+        - setup_master.sh
+        - scripts/sync_config.sh
+        - scripts/backup_config.sh
+        - scripts/validate_yaml.sh
+        - scripts/system_check.sh
+        - scripts/autocommit.sh
+        - scripts/mount_storage.sh
+        - scripts/storage_analyzer.sh
+        - scripts/setup_cron_backup.sh
+        - POST_INSTALL/post_install_setup_menu.sh
+        - POST_INSTALL/setup_file_explorer.sh
+        - POST_INSTALL/setup_maintenance.sh
+        - POST_INSTALL/setup_monitoring.sh
+
+    - name: Create config directories
+      file:
+        path: "{{ repo_path }}/{{ item }}"
+        state: directory
+        owner: "{{ ha_user }}"
+        group: "{{ ha_user }}"
+      loop:
+        - config/packages
+        - config/zigbee2mqtt
+        - config/mosquitto
+        - config/node-red
+        - config/portainer
+        - backups
+
+    - name: Copy example configs
+      copy:
+        src: "{{ repo_path }}/TEMPLATES/package_examples/"
+        dest: "{{ repo_path }}/config/packages/"
+        owner: "{{ ha_user }}"
+        group: "{{ ha_user }}"
+      ignore_errors: true
+
+    - name: Sync configs
+      shell: "cd {{ repo_path }} && ./scripts/sync_config.sh --force --validate"
+      become_user: "{{ ha_user }}"
+
+    - name: Start Docker services
+      shell: "cd {{ repo_path }} && docker-compose -f {{ repo_path }}/docker-compose.yml up -d"
+      become_user: "{{ ha_user }}"
+
+    - name: Setup cron backup
+      shell: "cd {{ repo_path }} && ./scripts/setup_cron_backup.sh install"
+      become_user: "{{ ha_user }}"
+      register: cron_backup_result
+      ignore_errors: true
+
+    - name: System check and validation
+      shell: "cd {{ repo_path }} && ./scripts/system_check.sh"
+      become_user: "{{ ha_user }}"
+      register: system_check_result
+      ignore_errors: true
+
+  post_tasks:
+    - name: Display deployment summary
+      debug:
+        msg:
+          - "✅ Home Assistant Suite installed successfully!"
+          - "Repository: {{ repo_path }}"
+          - "User: {{ ha_user }}"
+          - "Docker services should be running"
+          - "Next: Access Home Assistant at http://{{ inventory_hostname }}:8123"
+          - "Configure via: {{ repo_path }}/POST_INSTALL/post_install_setup_menu.sh"
+
+    - name: Health check
+      shell: "docker-compose -f {{ repo_path }}/docker-compose.yml ps"
+      register: docker_status
+      changed_when: false
+
+    - name: Show Docker status
+      debug:
+        msg: "{{ docker_status.stdout_lines }}"

@@ -1,0 +1,42 @@
+- alias: "Automatický herní režim"
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.gaming_pc_status
+      to: "on"
+  action:
+    - service: light.turn_off
+      target:
+        area_id: gaming_room
+    - service: light.turn_on
+      target:
+        entity_id: light.gaming_ambient
+      data:
+        brightness: 30
+        rgb_color: [0, 0, 255]
+    - service: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.gaming_mode
+
+- alias: "Upozornění na vysokou teplotu GPU"
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.gaming_pc_gpu_temperature
+      above: 80
+  action:
+    - service: notify.mobile_app_phone
+      data:
+        title: "⚠️ Vysoká teplota GPU"
+        message: "Teplota grafické karty je {{ states('sensor.gaming_pc_gpu_temperature') }}°C"
+
+- alias: "Automatické zálohování na NAS"
+  trigger:
+    - platform: time
+      at: "02:00:00"
+  condition:
+    - condition: template
+      value_template: "{{ states('sensor.nas_connection') == 'connected' }}"
+  action:
+    - service: backup.create
+      data:
+        name: "Automatická záloha {{ now().strftime('%Y-%m-%d') }}"
+        password: !secret backup_password

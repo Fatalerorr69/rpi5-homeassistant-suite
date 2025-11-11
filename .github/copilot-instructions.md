@@ -2,57 +2,119 @@
 
 Krátké, konkrétní pokyny, které vám pomohou být produktivní v tomto repozitáři.
 
-- Projektová struktura: `INSTALLATION/`, `HARDWARE/`, `CONFIG/` (zdrojové HA config šablony), `DIAGNOSTICS/`, `POST_INSTALL/`, `TEMPLATES/`.
-- Důležité soubory: `docker-compose.yml`, `setup_master.sh`, `install.sh`, `PROJECT_STRUCTURE.md`, `README.md`.
+**Projektová struktura:** `INSTALLATION/`, `HARDWARE/`, `CONFIG/` (zdrojové HA config), `DIAGNOSTICS/`, `POST_INSTALL/`, `TEMPLATES/`, `tests/`, `docs/`, `scripts/`.
 
-Hlavní myšlenka (big picture)
-- Repo poskytuje kompletní instalační sadu pro Home Assistant na RPi5. Instalace má dvě vrstvy:
-  1) systémové závislosti a HA supervised agenty via `install.sh` / `setup_master.sh` (APT + dpkg).
-  2) Dockerové služby (Home Assistant, Mosquitto, Zigbee2MQTT, Node-RED, Portainer) spouštěné přes `docker-compose.yml`.
-- `CONFIG/` (velká písmena) obsahuje zdrojové konfigurační šablony. Runtime očekává nízkopísmenný adresář `config/` (docker-compose a instalační skripty používají `./config`). Při modifikacích:
-  - upravujte zdroj v `CONFIG/` nebo v `TEMPLATES/`, ale před spuštěním služeb se ujistěte, že odpovídající soubory jsou v `config/` (repo root) nebo aktualizujte `docker-compose.yml` podle potřeby.
+**Klíčové soubory:** `docker-compose.yml`, `setup_master.sh`, `install.sh`, `PROJECT_STRUCTURE.md`, `README.md`, `CHANGELOG.md`.
 
-Důležité workflow a příkazy
-- Nastavení systému (po klonování):
-  - Spusťte: `./install.sh install` (instaluje závislosti, Docker, os-agent). Tento skript volá apt/dpkg a mění skupiny uživatele (docker, dialout).
-  - Poté spusťte: `./setup_master.sh` z kořenového adresáře projektu (skript kontroluje, že je spuštěn z adresáře s `docker-compose.yml`).
-- Pro Docker služby (z kořene repo):
-  - `docker-compose up -d` — použijí se služby definované v `docker-compose.yml`.
-  - Kontrola: `docker-compose ps`, `docker logs <container>` nebo `docker-compose logs`.
-- Diagnostika a opravy:
-  - Spusťte `./setup_master.sh` → volba 5 (diagnostika) nebo použijte skripty v `DIAGNOSTICS/` (např. `repair_homeassistant.py`, `health_dashboard.sh`).
+### Architektura (big picture)
 
-Projektové konvence a vzory (specifické)
-- Skripty jsou bash s `set -e` a vlastní logovací funkcí — změny musí zachovat chování (pokud přidáváte kroky, používejte `log "..."` a vracejte nenulové kódy při chybě).
-- Skripty kontrolují YAML pomocí Python `yaml.safe_load(...)`. Pokud generujete YAML, ujistěte se, že je kompatibilní s PyYAML (projekt očekává python3 + pyyaml při validaci).
-- Nikdy nespouštějte hlavní instalační skripty jako `root` (skripty explicitně kontrolují `whoami` a exitují při root).
-- Pokud přidáváte nový Docker service, aktualizujte `docker-compose.yml` a případně `TEMPLATES/docker-compose.yml.tmpl`.
+Repo poskytuje **kompletní instalační sadu** pro Home Assistant na RPi5 se **dvěma vrstvami**:
+1. **Systémové vrstvy** — `install.sh` / `setup_master.sh` instalují závislosti, Docker, os-agent (APT + dpkg).
+2. **Dockerové služby** — `docker-compose.yml` orchestruje: Home Assistant, Mosquitto (MQTT), Zigbee2MQTT, Node-RED, Portainer.
 
-Integrace a závislosti
-- Repo používá apt/dpkg pro systémové balíčky a stahuje konkrétní `.deb` pro `os-agent` a `homeassistant-supervised` (kontrola verzí v skriptech). Pozor na architekturu (aarch64 pro RPi5).
-- Docker kontejner `homeassistant` je mapován na `./config:/config` — to znamená, že runtime konfigurace HA se nachází v `config/`.
-- Zigbee2MQTT očekává device mapping `/dev/ttyUSB0` — pokud upravujete integraci, zkontrolujte `docker-compose.yml` `devices:` a oprávnění (skupiny `dialout`).
+**Config management:** `CONFIG/` (zdroj) → `scripts/sync_config.sh` → `config/` (runtime). Před Docker startem se automaticky synchronizuje a validuje.
 
-Jak psát změny (praktické příklady)
-- Menší změna konfigurace HA:
-  1) upravte `CONFIG/configuration.yaml` (zdroj),
-  2) zkopírujte do `config/configuration.yaml` (runtime),
-  3) restartujte službu: `docker-compose restart homeassistant`.
-- Přidání služby do compose:
-  - Přidejte službu do `docker-compose.yml`, přidejte popis do `PROJECT_STRUCTURE.md` a případně vytvořte template v `TEMPLATES/`.
+### Workflow: Instalace a nasazení
 
-Pozor na časté pasti (edge cases)
-- Rozdíl `CONFIG/` vs `config/` — to je zdroj mnoha zmatků. Před spuštěním Dockeru ověřte obsah `config/`.
-- Skripty mění systémová nastavení (systemd, uživatelské skupiny). Testujte změny v izolovaném prostředí nebo VM.
-- YAML validace používá lokální Python; pokud přidáte YAML-generující kód, přidejte test validace (můžete spustit `python3 -c "import yaml; yaml.safe_load(open('path'))"`).
+**Po klonování:**
 
-Kde hledat příklady v repozitáři
-- `docker-compose.yml` — hlavní composition a mappingy
-- `setup_master.sh`, `install.sh` — všechny instalační postupy, kontrolní a diagnostické příklady
-- `CONFIG/configuration.yaml`, `TEMPLATES/*` — příklady struktury HA konfigurace
-- `HARDWARE/mhs35*` nebo `mhs35_setup.sh` — příklad specializovaného hardware setupu
+```bash
+./install.sh install            # Systémové závislosti, Docker
+./setup_master.sh               # Home Assistant + Docker služby (menu vybere)
+```
 
-Poslední poznámka
-- Buďte explicitní: když navrhujete změnu konfigurace, v PR uveďte přesně jaký soubor v `CONFIG/` byl změněn a jak ho do `config/` nasadit (kopírování / restart služby). Pokud něco vyžaduje změnu systémových práv nebo instalaci balíčku, uveďte to jasně v PR popisu.
+**Po změně konfigurace:**
 
-Pokud chcete, mohu tento soubor zkrátit, rozšířit o návrhy PR template nebo přidat kontrolní skripty pro synchronizaci `CONFIG/` -> `config/`.
+```bash
+./scripts/sync_config.sh --dry-run              # Náhled
+./scripts/sync_config.sh --force --validate     # Nasazení + YAML check
+docker-compose restart homeassistant
+```
+
+**Diagnostika:**
+
+```bash
+./setup_master.sh               # Menu: 5 = Diagnostika
+# nebo
+docker-compose logs -f
+```
+
+### Automatizace v projektu
+
+- `scripts/sync_config.sh` — Synchronizace `CONFIG/` → `config/`, s validací YAML
+- `scripts/validate_yaml.sh` — YAML validace (všechny `.yaml` pod `config/`)
+- `scripts/backup_config.sh` — Zálohování s rotací (default 7 záloh)
+- `scripts/setup_cron_backup.sh` — Instalace cron job (každých 12h)
+- `POST_INSTALL/post_install_addons.sh` — Příprava runtime provedení
+- `.github/workflows/validate-yaml.yml` — CI: YAML check na PR/push
+- `.github/workflows/lint.yml` — CI: ShellCheck + Markdown lint
+- `tests/test_scripts.sh` — Unit testy pro skripty
+
+### Konvence a pravidla
+
+- **Bash:** `set -euo pipefail` na začátek, logování přes `log "..."`, správné exit kódy.
+- **YAML:** Všechny YAML kontrolovány přes `python3 -c "import yaml; yaml.safe_load(open(...))"`.
+- **Root:** Hlavní skripty **nikdy** jako `root` (kontrola v kódu); změny vyžadují `sudo`.
+- **Permissions:** Nový skript musí být `chmod +x`; testy spuštěny přes `bash -n`.
+- **Dokumentace:** Každá nová funkcionalita → zápis do `CHANGELOG.md`, popis v `README.md` nebo `docs/`.
+
+### Vývoj a testování
+
+**Přidat nový skript:**
+
+1. Vytvořte v `scripts/` nebo `POST_INSTALL/`, přidejte `#!/bin/bash` + `set -euo pipefail`
+2. Testujte lokálně: `bash -n script.sh`
+3. Přidejte test do `tests/test_scripts.sh`
+4. Aktualizujte `CHANGELOG.md` a `README.md`
+
+**Přidat novou config:**
+
+1. Editujte `CONFIG/soubor.yaml`
+2. Spusťte: `./scripts/sync_config.sh --dry-run`
+3. Spusťte: `./scripts/sync_config.sh --force --validate`
+4. V PR: popište co se změnilo a jak nasadit
+
+**Před PR:**
+
+```bash
+bash -n setup_master.sh install.sh scripts/*.sh              # Syntax check
+./scripts/validate_yaml.sh --all                             # YAML validace
+./tests/test_scripts.sh                                      # Testy
+```
+
+### Klíčové adresáře a příklady
+
+- `CONFIG/` — Zdrojové YAML konfigurace (configuration.yaml, automations.yaml, etc.)
+- `config/` — Runtime (synchronizováno, docker mountuje)
+- `scripts/` — Pomocné skripty (sync, backup, validate, cron)
+- `tests/` — Unit testy (`test_scripts.sh`)
+- `docs/` — DEVELOPER_GUIDE.md, TROUBLESHOOTING.md
+- `DIAGNOSTICS/` — Health dashboard, repairovací skripty
+- `.github/workflows/` — CI/CD (validate-yaml.yml, lint.yml)
+
+### Příklady z repo
+
+- `docker-compose.yml` — Služby a volume mappingy
+- `setup_master.sh` — Instalace, diagnostika, repair logika
+- `CONFIG/configuration.yaml` — HA config struktura
+- `TEMPLATES/` — Ukázkové konfigurace a balíčky
+- `HARDWARE/mhs35_setup.sh` — Hardware specializace
+
+### Pozor na pasti
+
+1. **`CONFIG/` vs `config/`** — `CONFIG/` je zdroj, `config/` runtime. Vždy synchronizujte před Docker.
+2. **PyYAML dostupnost** — Instalace zajištěna, ale pokud chybí: `pip3 install pyyaml`.
+3. **Oprávnění** — `docker` skupina pro Docker, `dialout` pro Zigbee USB, `sudo` pro systémové změny.
+4. **Systemd/Supervised** — Projekt podporuje jak `homeassistant-supervised` tak Docker; skripty mají obě cesty.
+
+### Kde hledat help
+
+- **Dokumentace:** `docs/DEVELOPER_GUIDE.md`, `docs/TROUBLESHOOTING.md`
+- **Historie:** `CHANGELOG.md`
+- **Struktura:** `PROJECT_STRUCTURE.md`
+- **Logy:** `/home/$(whoami)/ha_suite_install.log`, `docker logs <service>`, `journalctl -u homeassistant`
+- **Diagnostika:** `./setup_master.sh` → volba 5 nebo `DIAGNOSTICS/health_dashboard.sh`
+
+---
+
+**Tl;dr:** Repo je **automatizovaný**, s **testováním a CI**, **zdrojovým config managementem** a **kompletní dokumentací**. Prostě: editujte `CONFIG/`, spusťte sync + validate, commitujte s popisem, otevřete PR.

@@ -1,0 +1,66 @@
+# Automaticky generované skripty
+wake_up_routine:
+  alias: "Ranní probuzení"
+  sequence:
+    - service: light.turn_on
+      target:
+        area_id: loznice
+      data:
+        brightness_pct: 50
+        color_temp: 350
+    - delay:
+        minutes: 10
+    - service: tts.google_translate_say
+      data:
+        entity_id: media_player.radio
+        message: "Dobré ráno, je čas vstávat. Venkovní teplota je {{ states('sensor.outdoor_temperature') }} stupňů."
+  mode: single
+  icon: mdi:weather-sunny
+
+evening_routine:
+  alias: "Večerní režim"
+  sequence:
+    - service: light.turn_off
+      target:
+        area_id: obyvaci_pokoj
+    - service: light.turn_on
+      target:
+        entity_id: light.nocni_osvetleni
+      data:
+        brightness: 10
+    - service: climate.set_temperature
+      target:
+        entity_id: climate.loznice
+      data:
+        temperature: 18
+  mode: single
+  icon: mdi:weather-night
+
+turn_on_gaming_pc:
+  alias: "Zapnout herní PC"
+  sequence:
+    - service: wake_on_lan.send_magic_packet
+      data:
+        mac: !secret gaming_pc_mac
+    - delay:
+        seconds: 30
+    - service: notify.mobile_app_phone
+      data:
+        title: "Herní PC"
+        message: "PC se zapíná, připravte se na hraní!"
+  mode: single
+  icon: mdi:power
+
+system_repair_cleanup:
+  alias: "Vyčištění systému"
+  sequence:
+    - service: system_log.clear
+    - service: recorder.purge
+      data:
+        keep_days: 7
+    - service: persistent_notification.create
+      data:
+        title: "Systém vyčištěn"
+        message: "Všechny nefunkční komponenty byly odstraněny"
+  mode: single
+  icon: mdi:brush

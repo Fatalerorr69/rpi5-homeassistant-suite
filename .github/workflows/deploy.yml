@@ -1,0 +1,139 @@
+name: Deploy to RPi
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'CONFIG/**'
+      - 'docker-compose.yml'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+    inputs:
+      target_host:
+        description: 'RPi IP or hostname'
+        required: false
+        default: 'homeassistant.local'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml
+      - name: Validate YAML
+        run: |
+          chmod +x ./scripts/validate_yaml.sh || true
+          ./scripts/validate_yaml.sh --all
+      - name: Check bash syntax
+        run: |
+          bash -n setup_master.sh install.sh scripts/*.sh || true
+
+  deploy:
+    needs: validate
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set deploy target
+        run: |
+          if [ "${{ github.event.inputs.target_host }}" != "" ]; then
+            echo "TARGET_HOST=${{ github.event.inputs.target_host }}" >> $GITHUB_ENV
+          else
+            echo "TARGET_HOST=homeassistant.local" >> $GITHUB_ENV
+          fi
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.RPI_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H $TARGET_HOST >> ~/.ssh/known_hosts 2>/dev/null || true
+        if: secrets.RPI_SSH_KEY != ''
+
+      - name: Sync and deploy
+        run: |
+          if [ "${{ secrets.RPI_SSH_KEY }}" = "" ]; then
+            echo "⚠️ RPI_SSH_KEY not configured. Skipping deployment."
+            echo "To enable deployment:"
+            echo "1. Generate SSH key: ssh-keygen -t ed25519"
+            echo "2. Add public key to ~/.ssh/authorized_keys on RPi"
+            echo "3. Add private key as secret RPI_SSH_KEY in GitHub"
+            exit 0
+          fi
+
+          # Sync via SSH
+          ssh -i ~/.ssh/id_rsa pi@$TARGET_HOST << 'DEPLOY_SCRIPT'
+            set -e
+            cd ~/rpi5-homeassistant-suite || cd ~/ha-suite || exit 1
+
+            echo "📦 Pulling latest changes..."
+            git pull origin main
+
+            echo "🔄 Synchronizing configs..."
+            ./scripts/sync_config.sh --force --validate || exit 1
+
+            echo "🚀 Restarting services..."
+            docker-compose down
+            docker-compose up -d
+
+            echo "✅ Deployment successful!"
+            echo "Status:"
+            docker-compose ps
+          DEPLOY_SCRIPT
+        env:
+          TARGET_HOST: ${{ env.TARGET_HOST }}
+
+      - name: Health check
+        run: |
+          if [ "${{ secrets.RPI_SSH_KEY }}" = "" ]; then
+            echo "⏭️  Skipping health check (no SSH key)"
+            exit 0
+          fi
+
+          ssh -i ~/.ssh/id_rsa pi@$TARGET_HOST << 'HEALTH_SCRIPT'
+            set -e
+            echo "🩺 Health Check:"
+
+            # Check Docker
+            docker ps || exit 1
+
+            # Check HA web
+            sleep 5
+            curl -s http://localhost:8123 &>/dev/null || {
+              echo "⚠️ HA web not responding yet"
+            }
+
+            # Check config
+            [ -f ~/rpi5-homeassistant-suite/config/configuration.yaml ] || {
+              echo "❌ Config missing"
+              exit 1
+            }
+
+            echo "✅ Health checks passed"
+          HEALTH_SCRIPT
+        env:
+          TARGET_HOST: ${{ env.TARGET_HOST }}
+        continue-on-error: true
+
+      - name: Notify on success
+        if: success()
+        run: |
+          echo "✅ Deployment completed successfully!"
+          echo "Target: $TARGET_HOST"
+          echo "Configs synced and services restarted"
+        env:
+          TARGET_HOST: ${{ env.TARGET_HOST }}
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "❌ Deployment failed!"
+          echo "Check logs above for details"

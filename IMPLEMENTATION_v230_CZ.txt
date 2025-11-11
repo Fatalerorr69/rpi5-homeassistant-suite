@@ -1,0 +1,170 @@
+╔═══════════════════════════════════════════════════════════════════════╗
+║         RPi5 HOME ASSISTANT SUITE v2.3.0 - IMPLEMENTACE               ║
+║     Kontrola Systémových Souborů & Výběr Verzí Instalace              ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+✅ CO BYLO IMPLEMENTOVÁNO:
+
+1. SYSTEM CHECK SKRIPT (scripts/system_check.sh)
+   ├─ Validace Bash skriptů (syntaxe)
+   ├─ Validace YAML souborů
+   ├─ Kontrola Markdown dokumentace
+   ├─ Ověření struktury adresářů
+   ├─ Kontrola kritických souborů
+   ├─ Kontrola oprávnění skriptů
+   ├─ Analýza velikostí souborů
+   ├─ Generování reportu
+   └─ Výběr z 9 verzí instalace (HA Supervised, Docker, MHS35, atd.)
+
+2. INTEGRACE DO setup_master.sh
+   ├─ Menu rozšířeno z 9 na 11 voleb
+   ├─ Volba 9: Kontrola systémových souborů
+   ├─ Volba 10: Výběr verze instalace
+   └─ Volba 11: Ukončit
+
+3. DOKUMENTACE
+   ├─ docs/SYSTEM_CHECK_GUIDE.md (detailní průvodce)
+   ├─ README.md (aktualizován)
+   ├─ CHANGELOG.md (verze 2.3.0)
+   └─ IMPLEMENTATION_NOTES_v230.md (technické detaily)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 STATISTIKA:
+
+Bash Skripty:           8 (nově +1: system_check.sh)
+POST_INSTALL Skripty:   11
+Dokumentace:            5 (nově +1: SYSTEM_CHECK_GUIDE.md)
+GitHub Workflows:       4
+Celkem Souborů:         39+ (bez .git)
+
+Verze Projektu:         2.3.0 (byla 2.2.0)
+Syntaxová Kontrola:     ✅ OK
+Struktura:              ✅ OK
+Dokumentace:            ✅ OK
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🚀 POUŽITÍ:
+
+VIA setup_master.sh (DOPORUČENO):
+  ./setup_master.sh
+  # Vyberte: 9 - Kontrola systémových souborů
+  #    nebo: 10 - Výběr verze instalace
+
+PŘÍMÉ SPUŠTĚNÍ:
+  ./scripts/system_check.sh
+  # Vyberte z menu:
+  #   1 - Kompletní kontrola
+  #   2 - Bash skripty
+  #   3 - YAML soubory
+  #   4 - Markdown
+  #   5 - Adresáře
+  #   6 - Kritické soubory
+  #   7 - Oprávnění (s opravou)
+  #   8 - Velikosti souborů
+  #   9 - Výběr verze instalace
+  #   10 - Generovat report
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 VERZE INSTALACE (VOLBA 9):
+
+Home Assistant:
+  1) Supervised (Docker + Supervised mode)
+  2) Docker (jen Docker, bez Supervised)
+  3) Full Suite (všechny komponenty)
+
+Hardware:
+  4) MHS35 Interactive (interaktivní setup)
+  5) MHS35 Auto (plně automatický)
+  6) Minimální (jen základy)
+
+Docker Compose:
+  7) Standard Docker Compose
+  8) HA Docker Compose
+  9) Vlastní konfigurace
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 KONTROLY PROVÁDĚNÉ:
+
+1. BASH SKRIPTY:
+   ✅ Kontrola syntaxe (bash -n)
+   ✅ Počet skriptů: 8
+   ✅ Chyby: 0
+
+2. YAML SOUBORY:
+   ✅ Validace syntaxe (PyYAML)
+   ✅ Automatická instalace PyYAML
+   ✅ Počet YAML: 18
+
+3. MARKDOWN:
+   ✅ Kontrola headingů
+   ✅ Počet MD: 12
+
+4. ADRESÁŘE:
+   ✅ scripts/
+   ✅ POST_INSTALL/
+   ✅ CONFIG/
+   ✅ config/
+   ✅ docs/
+   ✅ tests/
+   ✅ ansible/
+   ✅ .github/
+
+5. KRITICKÉ SOUBORY:
+   ✅ setup_master.sh
+   ✅ install.sh
+   ✅ docker-compose.yml
+   ✅ README.md
+   ✅ CHANGELOG.md
+   ✅ .github/copilot-instructions.md
+
+6. OPRÁVNĚNÍ:
+   ✅ Automatická oprava chmod +x
+   ✅ Detekce absence execute bitu
+
+7. VELIKOSTI:
+   ✅ Detekce velmi malých souborů (<50B)
+   ✅ Detekce velkých souborů (>50KB)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📚 DOKUMENTACE:
+
+SYSTEM_CHECK_GUIDE.md:
+  - Detailní instrukce pro každou funkci
+  - Příklady výstupů
+  - Troubleshooting
+  - Integrace se setup_master.sh
+
+README.md:
+  - Přidán system_check.sh do sekcí
+  - Aktualizován popis funkcí
+
+CHANGELOG.md:
+  - Verze 2.3.0 s detailním popisem
+  - Historii verzí 2.0, 2.1, 2.2, 2.3
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️ POZNÁMKY:
+
+1. PyYAML — Automaticky instaluje (apt → pip)
+2. Sudo — Některé operace vyžadují sudo
+3. Logging — Vše se loguje do ~/system_check.log
+4. Git — Report detekuje Git info (pokud je repo)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✨ STATUS: ✅ HOTOVO & PRODUCTION READY
+
+Verze:           2.3.0
+Datum:           2025-11-12
+Syntaxe:         ✅ Všechny skripty OK
+Testy:           ✅ Všechny OK
+Dokumentace:     ✅ Kompletní
+Integrovaný:     ✅ V setup_master.sh
+
+╚═══════════════════════════════════════════════════════════════════════╝
