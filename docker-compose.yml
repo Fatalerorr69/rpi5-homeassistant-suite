@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  homeassistant:
+    image: "ghcr.io/home-assistant/home-assistant:stable"
+    container_name: homeassistant
+    volumes:
+      - ./config:/config
+      - /etc/localtime:/etc/localtime:ro
+      - /run/dbus:/run/dbus:ro
+    environment:
+      - TZ=Europe/Prague
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+    depends_on:
+      - mosquitto
+
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: mosquitto
+    volumes:
+      - ./config/mosquitto:/mosquitto/config
+      - ./config/mosquitto/data:/mosquitto/data
+      - ./config/mosquitto/log:/mosquitto/log
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    environment:
+      - TZ=Europe/Prague
+
+  zigbee2mqtt:
+    image: "koenkk/zigbee2mqtt:latest"
+    container_name: zigbee2mqtt
+    volumes:
+      - ./config/zigbee2mqtt:/app/data
+      - /run/udev:/run/udev:ro
+    devices:
+      - /dev/ttyUSB0:/dev/ttyUSB0
+    environment:
+      - TZ=Europe/Prague
+    restart: unless-stopped
+    network_mode: host
+    depends_on:
+      - mosquitto
+
+  nodered:
+    image: nodered/node-red:latest
+    container_name: nodered
+    volumes:
+      - ./config/node-red/data:/data
+    restart: unless-stopped
+    ports:
+      - "1880:1880"
+    environment:
+      - TZ=Europe/Prague
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./config/portainer/data:/data
+    ports:
+      - "9000:9000"
