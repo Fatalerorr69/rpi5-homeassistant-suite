@@ -45,7 +45,8 @@ check_dependencies() {
 # Funkce pro kontrolu YAML souborů
 check_yaml_files() {
     log "Kontrola YAML konfiguračních souborů..."
-    
+    ensure_pyyaml
+
     local yaml_files=(
         "docker-compose.yml"
         "config/configuration.yaml"
@@ -67,6 +68,42 @@ check_yaml_files() {
     done
     
     return 0
+}
+
+# Ensure PyYAML is available for validation. Try apt, then pip.
+ensure_pyyaml() {
+    if python3 -c "import yaml" &>/dev/null; then
+        return 0
+    fi
+    log "PyYAML not found — attempting to install python3-yaml via apt"
+    if sudo apt-get update -y && sudo apt-get install -y python3-yaml; then
+        log "Installed python3-yaml via apt"
+        return 0
+    fi
+    log "apt install failed or package unavailable — attempting pip3 install pyyaml"
+    if command -v pip3 &>/dev/null; then
+        sudo pip3 install pyyaml
+        if python3 -c "import yaml" &>/dev/null; then
+            log "Installed PyYAML via pip3"
+            return 0
+        fi
+    fi
+    log "⚠️ Nelze nainstalovat PyYAML. YAML validace může selhat."
+    return 1
+}
+
+# Sync CONFIG/ -> config/ before starting docker components
+sync_configs() {
+    log "Synchronizuji CONFIG/ -> config/"
+    if [ -x "./scripts/sync_config.sh" ]; then
+        ./scripts/sync_config.sh --force --validate || {
+            log "❌ Synchronizace nebo validace configu selhala"
+            return 1
+        }
+        log "✅ Configs synchronized and validated"
+    else
+        log "⚠️ scripts/sync_config.sh neexistuje nebo není spustitelný"
+    fi
 }
 
 # Funkce pro kontrolu skriptů
@@ -206,6 +243,12 @@ install_docker_components() {
         return 1
     fi
     
+    # Synchronizace zdrojových konfigurací a spuštění služeb
+    if ! sync_configs; then
+        log "❌ Sync config failed, aborting docker-compose start"
+        return 1
+    fi
+
     # Spuštění služeb
     log "Spouštění služeb..."
     docker-compose up -d

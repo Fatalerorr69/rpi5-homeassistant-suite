@@ -72,6 +72,19 @@ install_dependencies() {
         network-manager \
         systemd-resolved
 
+    # Ensure PyYAML is available for YAML validation used elsewhere
+    if ! python3 -c "import yaml" &>/dev/null; then
+        log "PyYAML chybí, zkusím nainstalovat python3-yaml (apt)"
+        if sudo apt-get install -y python3-yaml; then
+            log "Nainstalováno python3-yaml přes apt"
+        else
+            log "apt selhal, zkouším pip3 install pyyaml"
+            sudo pip3 install pyyaml || log "⚠️ Instalace PyYAML přes pip selhala"
+        fi
+    else
+        log "✅ PyYAML je již nainstalován"
+    fi
+
     # Instalace Dockeru
     log "Instalace Dockeru..."
     if ! command -v docker &> /dev/null; then
