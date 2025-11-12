@@ -42,35 +42,36 @@ install_dependencies() {
 
     # Instalace základních balíčků
     log "Instalace základních balíčků..."
-    sudo apt-get install -y \
-        curl \
-        wget \
-        git \
-        jq \
-        python3 \
-        python3-pip \
-        python3-venv \
-        python3-dev \
-        libffi-dev \
-        libssl-dev \
-        libjpeg-dev \
-        zlib1g-dev \
-        autoconf \
-        build-essential \
-        libopenjp2-7 \
-        libtiff5 \
-        libturbojpeg0 \
-        tzdata \
-        lsb-release \
-        apt-transport-https \
-        ca-certificates \
-        gnupg2 \
-        software-properties-common \
-        apparmor \
-        apparmor-utils \
-        dbus \
-        network-manager \
-        systemd-resolved
+    
+    # Instalace balíčků - se zpracováním chyb (některé nemusí být dostupné)
+    PACKAGES=(
+        curl wget git jq
+        python3 python3-pip python3-venv python3-dev
+        libffi-dev libssl-dev libjpeg-dev zlib1g-dev
+        autoconf build-essential
+        libopenjp2-7 libopenjp2-7-dev
+        libturbojpeg0 libturbojpeg0-dev
+        tzdata lsb-release apt-transport-https
+        ca-certificates gnupg2
+        software-properties-common
+        apparmor apparmor-utils
+        dbus network-manager systemd-resolved
+    )
+    
+    # Instalace s fallback pro chybějící balíčky
+    for package in "${PACKAGES[@]}"; do
+        if sudo apt-get install -y "$package" 2>/dev/null; then
+            log "✅ Nainstalován: $package"
+        else
+            log "⚠️  Balík nedostupný: $package (přeskakuji)"
+        fi
+    done
+    
+    # Kontrola povinných balíčků
+    if ! command -v curl &>/dev/null || ! command -v python3 &>/dev/null; then
+        log "❌ Kritické balíčky chybí (curl, python3)"
+        exit 1
+    fi
 
     # Ensure PyYAML is available for YAML validation used elsewhere
     if ! python3 -c "import yaml" &>/dev/null; then
