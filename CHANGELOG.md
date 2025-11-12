@@ -2,6 +2,51 @@
 
 Všechny příznačné změny v tomto projektu jsou zdokumentovány v tomto souboru.
 
+## [2.4.1] - 2025-11-12
+
+### Nové Funkce v 2.4.1
+
+- **README.md** — Přidána sekce "Užitečné Python snippety"
+  - Příklad: Stažení HACS z GitHub Releases s využitím `requests` + `zipfile`
+  - Dokumentace zavislostí a best practices
+- **scripts/validate_yaml.sh** — Vylepšená YAML validace
+  - Oddělení standard YAML (docker-compose.yml) od Home Assistant config files
+  - Přímá integrace s `validate_ha_config.py` pro custom tagy (!include, !secret)
+  - Jasná diagnostika chyb
+- **.github/copilot-instructions.md** — Komplexní aktualizace AI instrukcí
+  - Strukturovaná architektura (Big Picture)
+  - Praktické workflow pro vývojáře
+  - Tabulka klíčových skriptů s příklady
+  - Konvence pro bash, YAML, dokumentaci
+  - Kritické detaily a pasti (CONFIG/ vs config/, PyYAML tagy, oprávnění)
+
+### Refaktoring v 2.4.1
+
+- **install.sh v2.1** — Komplexní vylepšení robustnosti a univerzality
+  - ✨ Přidán `set -euo pipefail` pro korektní error handling (s graceful fallbackem pro dev kontejnery)
+  - 🔍 Detekce OS (Ubuntu, Debian, Armbian) přes `/etc/os-release`
+  - 🎨 Barvené výstupy (RED/GREEN/YELLOW/BLUE) + strukturované logování
+  - 🔄 Retry logika pro selhavší instalace (default: 3 pokusy, 5s delay)
+  - 🏗️ Detekce CPU architektury (aarch64, armv7l, x86_64) pro os-agent
+  - ⏱️ Timeout pro wget/curl (30s) proti vyřazení procesů
+  - 🚀 Volby: `--skip-docker`, `--skip-compose`, `--skip-agent`, `--dry-run`, `--retry N`
+  - 📋 Logování do `~/.homeassistant_install/install_TIMESTAMP.log`
+  - 🛡️ Kontrola sudo s fallbackem pro dev kontejnery (bez sudo)
+  - 🎯 Lepší error zprávy a diagnostika
+  - 📖 Obsáhlá help (`./install.sh help`)
+  - 🔗 Integrace s detect_os(), command_exists(), run_with_retry()
+  - 💾 Od 175 do 525 řádků kvalitního kódu s komentáři
+
+### Technické Detaily
+
+- `install.sh` nyní importuje `sudo` jen když je dostupný a potřebný
+- Jednotlivé balíčky se instalují s možností preskočit na chybu
+- os-agent detekuje správnou verzi pro ARM/ARM64/x86_64 automaticky
+- Log obsahuje metadata: timestamp, user, arch, script version
+- Dry-run mód (`--dry-run`) simuluje bez skutečných změn
+
+---
+
 ## [2.4.0-final] - 2025-11-12
 
 ### Nové Funkce v 2.4.0-final
