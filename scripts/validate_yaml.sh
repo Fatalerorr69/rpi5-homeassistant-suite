@@ -38,7 +38,16 @@ fi
 # Validate standard YAML files
 echo "[*] Validating standard YAML files..."
 python3 - <<'PY'
-import sys, yaml, os, glob
+import sys, yaml, os
+
+# Define HA custom tag constructors
+def secret_constructor(loader, node): return '!secret'
+def include_constructor(loader, node): return '!include'
+def include_dir_constructor(loader, node): return '!include_dir_merge_named'
+
+yaml.add_constructor('!secret', secret_constructor)
+yaml.add_constructor('!include', include_constructor)
+yaml.add_constructor('!include_dir_merge_named', include_dir_constructor)
 
 paths = []
 candidates = ['docker-compose.yml']

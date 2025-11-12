@@ -52,15 +52,25 @@ test_validate_yaml_valid() {
     cat > "$TEST_DIR/config_valid/valid.yaml" <<EOF
 homeassistant:
   name: Home
-  packages: !include_dir_merge_named packages
-mqtt:
-  broker: localhost
+automation: !include automations.yaml
+scripts: !secret scripts_secret
+packages: !include_dir_merge_named packages/
 EOF
 
     cd "$TEST_DIR/config_valid"
     if command -v python3 &>/dev/null && python3 -c "import yaml" &>/dev/null; then
         python3 - <<PY
 import yaml
+
+# Define HA custom tag constructors
+def secret_constructor(loader, node): return '!secret'
+def include_constructor(loader, node): return '!include'
+def include_dir_constructor(loader, node): return '!include_dir_merge_named'
+
+yaml.add_constructor('!secret', secret_constructor)
+yaml.add_constructor('!include', include_constructor)
+yaml.add_constructor('!include_dir_merge_named', include_dir_constructor)
+
 try:
     yaml.safe_load(open('valid.yaml'))
     print('  ✅ Valid YAML parsed successfully')
