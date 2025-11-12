@@ -1,0 +1,275 @@
+# Home Assistant Community Store (HACS) Configuration
+# Balíček pro správu HACS repozitářů a komponent
+# 
+# Tento balíček obsahuje seznam důležitých custom komponent a integrací
+# dostupných přes HACS. Pro aktivaci je potřeba:
+# 1. Nainstalovat HACS přes HA UI nebo přes scripts/install_addons.sh
+# 2. V Home Assistant UI: Settings → Devices & Services → HACS
+# 3. Přidat repozitáře přes UI nebo upravit configuration.yaml
+#
+# HACS se automaticky stará o aktualizace komponent
+#
+# ============================================================================
+# POZNÁMKA: Repozitáře a jejich seznamy jsou v HACS UI, tady jsou jen tipy
+# ============================================================================
+
+# Systém se spustí normálně - HACS komponenty jsou volitelné
+# Pokud chcete autoinstall, použijte script: scripts/install_addons.sh
+
+# ============================================================================
+# DOPORUČENÉ HACS REPOZITÁŘE A KOMPONENTY
+# ============================================================================
+#
+# KATEGORIE: FRONTEND & UI
+# ─────────────────────────────────────────────────────────────────────────
+# 1. Lovelace Mini Media Player — Mini přehrávač hudby
+#    repo: kalkih/mini-media-player
+#    type: Frontend (Lovelace Card)
+#
+# 2. Button Card — Flexibilní tlačítko s custom styly
+#    repo: custom-cards/button-card
+#    type: Frontend (Lovelace Card)
+#
+# 3. Mushroom Cards — Krásné karty v stylu Material Design 3
+#    repo: piitaya/lovelace-mushroom-cards
+#    type: Frontend (Lovelace Card)
+#
+# 4. Monster Card — Dynamické karty podle podmínek
+#    repo: kalkih/monster-card
+#    type: Frontend (Lovelace Card)
+#
+# 5. ApexCharts Card — Grafy a statistiky
+#    repo: RomRider/apexcharts-card
+#    type: Frontend (Lovelace Card)
+#
+# ────────────────────────────────────────────────────────────────────────
+# KATEGORIE: INTEGRACE & AUTOMATIZACE
+# ────────────────────────────────────────────────────────────────────────
+# 1. Scheduler Card — Vytváření harmonogramů bez psaní YAML
+#    repo: nielsfaber/scheduler-card
+#    type: Frontend + Backend
+#
+# 2. Tasmota — Integrace pro Tasmota zařízení (WiFi relé, čidla)
+#    repo: zigpy/zha-device-handlers
+#    type: Integration
+#
+# 3. ZHA Device Handlers — Rozšíření pro Zigbee zařízení
+#    repo: zigpy/zha-device-handlers
+#    type: Integration
+#
+# 4. Telegram Bot — Odesílání zpráv přes Telegram
+#    repo: rkoshak/sensorstalk-hass-addon
+#    type: Integration
+#
+# 5. Google Calendar — Synchronizace s Google Calendar
+#    Nativně v Home Assistant od verze 2023.2+
+#
+# ────────────────────────────────────────────────────────────────────────
+# KATEGORIE: CHYTRÉ DOMÁCNOSTI & ZAŘÍZENÍ
+# ────────────────────────────────────────────────────────────────────────
+# 1. Adaptive Lighting — Inteligentní ovládání osvětlení podle času
+#    repo: basnijholt/adaptive-lighting
+#    type: Integration
+#
+# 2. Simple Last Seen — Sledování posledního přihlášení zařízení
+#    repo: kamaradclimber/simple-last-seen
+#    type: Integration
+#
+# 3. Browser Mod — Fernsteuerung webových prohlížečů
+#    repo: thomasloven/hass-browser_mod
+#    type: Integration
+#
+# 4. Presence Simulation — Simulace přítomnosti během dovolené
+#    repo: slodki/Presence-Simulation
+#    type: Integration
+#
+# 5. Energy Dashboard Improvements — Lepší správa energií
+#    Nativně v Home Assistant od verze 2021.8+
+#
+# ────────────────────────────────────────────────────────────────────────
+# KATEGORIE: OFFLINE ASISTENTI & ZPRACOVÁNÍ PŘIROZENÉHO JAZYKA
+# ────────────────────────────────────────────────────────────────────────
+# 1. Wyoming — Offline řeč přeměňuji přes offline model (bez internetu)
+#    repo: rhasspy/wyoming
+#    type: Integration
+#
+# 2. Local Tuya — Lokální ovládání Tuya zařízení bez cloudu
+#    repo: rospogrigio/localtuya
+#    type: Integration
+#
+# 3. OpenWakeWord — Probuzení asistenta bez cloudu
+#    repo: openwakword/openwakeword
+#    type: Integration
+#
+# ────────────────────────────────────────────────────────────────────────
+# KATEGORIE: NOTIFIKACE & KOMUNIKACE
+# ────────────────────────────────────────────────────────────────────────
+# 1. Pushbullet — Odesílání notifikací na mobil
+#    repo: xknx/knx-ha
+#    type: Integration
+#
+# 2. Matrix Bot — Bot pro komunikaci přes Matrix (alternativa k Telegramu)
+#    repo: NilsRo/matrix_bot_hass
+#    type: Integration
+#
+# 3. Ntfy — Push notifikace přes HTTP (vlastní server)
+#    repo: jcwillox/hass-ntfy
+#    type: Integration
+#
+# ────────────────────────────────────────────────────────────────────────
+# KATEGORIE: ZÁLOHOVÁNÍ & SPRÁVA
+# ────────────────────────────────────────────────────────────────────────
+# 1. Samba Backup — Zálohování do Samba serveru
+#    repo: jcwillox/hassio-samba-backup
+#    type: Add-on
+#
+# 2. SSH Terminal — SSH přístup přes webové rozhraní
+#    repo: jcwillox/hassio-ssh-terminal
+#    type: Add-on
+#
+# 3. Backup & Restore — Automatické zálohování
+#    Nativně v Home Assistant
+#
+# ────────────────────────────────────────────────────────────────────────
+# KATEGORIE: MONITORING & STATISTIKY
+# ────────────────────────────────────────────────────────────────────────
+# 1. System Monitor — Monitoring CPU, RAM, disk, teplota
+#    repo: jcwillox/hass-system-monitor
+#    type: Integration
+#
+# 2. Uptime Robot — Sledování dostupnosti služeb
+#    repo: ludeeus/hacs
+#    type: Integration
+#
+# 3. Pi-Hole — Správa DNS a reklam
+#    repo: hassio-addons/repository
+#    type: Add-on
+#
+# ============================================================================
+# INSTALACE HACS
+# ============================================================================
+#
+# Manuálně přes UI:
+# 1. Jít na https://hacs.io/
+# 2. Kliknout "Custom repositories"
+# 3. Přidat URL repozitáře
+# 4. Nainstalovat komponentu
+#
+# Automaticky přes script:
+# $ ./scripts/install_addons.sh --install-hacs
+#
+# ============================================================================
+# KONFIGURACE HACS PRO CUSTOM REPOZITÁŘE
+# ============================================================================
+#
+# Pro přidání vlastních repozitářů do configuration.yaml:
+#
+# hacs:
+#   token: [váš personal access token z GitHubu]
+#   repositories:
+#     - url: https://github.com/user/custom-integration
+#       category: integration
+#     - url: https://github.com/user/custom-card
+#       category: frontend
+#
+# ============================================================================
+# TIPY PRO SPRÁVU KOMPONENT
+# ============================================================================
+#
+# 1. SECURITY: Vždy si ověřte autora a počet hvězd na GitHubu
+#    - Komponenty od ověřených autorů jsou bezpečnější
+#    - Repozitáře s 1000+ hvězd jsou obvykle dobré
+#
+# 2. KOMPATIBILITA: Vždy si přečtěte requirements
+#    - Některé komponenty vyžadují konkrétní verzi HA
+#    - Zde máme HA v Dockeru, vět problémů s verzí
+#
+# 3. AKTUALIZACE: HACS automaticky hlásí updates
+#    - Instalujte security patches ihned
+#    - Ostatní updaty si přečtěte changelog
+#
+# 4. PERFORMANCE: Příliš mnoho komponent = pomalý HA
+#    - Instalujte jen to, co potřebujete
+#    - Monitorujte CPU a RAM v System Monitor
+#
+# ============================================================================
+# SEZNAM VÝBĚROVÝCH REPOZITÁŘŮ PRO INSTALACI
+# ============================================================================
+#
+# Doporučuji začít s těmito základními komponenty:
+#
+# ┌─ ESSENTIALS (Nutné)
+# │  └─ HACS (Home Assistant Community Store)
+# │
+# ├─ FRONTEND (Doporučené)
+# │  ├─ Mushroom Cards — Krásné karty
+# │  ├─ Button Card — Flexibilní tlačítka
+# │  └─ ApexCharts Card — Grafy
+# │
+# ├─ INTEGRATIONS (Užitečné)
+# │  ├─ Adaptive Lighting — Chytré osvětlení
+# │  ├─ Local Tuya — Lokální Tuya zařízení
+# │  └─ System Monitor — Monitoring systému
+# │
+# └─ AUTOMATION (Volitelné)
+#    ├─ Browser Mod — Ovládání prohlížečů
+#    ├─ Presence Simulation — Simulace přítomnosti
+#    └─ Scheduler Card — Harmonogramy
+#
+# ============================================================================
+# MANAŽMENT HACS KOMPONENT (Scripty)
+# ============================================================================
+#
+# Výstup do souboru:
+# $ docker-compose exec homeassistant hass --info > ha_info.txt
+#
+# Kontrola instalovaných komponent:
+# $ docker-compose exec homeassistant find /config/custom_components -name "manifest.json"
+#
+# Ručné stažení komponenty:
+# $ wget https://github.com/user/repo/releases/download/v1.0/custom_component.zip
+# $ unzip custom_component.zip -d /config/custom_components/
+#
+# Restart Home Assistant po instalaci:
+# $ docker-compose restart homeassistant
+#
+# ============================================================================
+# DOPORUČENÉ KOMBINACE REPOZITÁŘŮ
+# ============================================================================
+#
+# SETUP 1: Minimální (Jen základy)
+# ────────────────────────────────────────────────────────────────────────
+# - HACS (pro správu ostatních)
+# - Mushroom Cards (pěkné UI)
+# - System Monitor (vědět, co se děje)
+#
+# SETUP 2: Domácí automatizace (Doporučeno pro RPi5)
+# ────────────────────────────────────────────────────────────────────────
+# - HACS
+# - Mushroom Cards
+# - Adaptive Lighting
+# - Local Tuya
+# - System Monitor
+# - Browser Mod
+# - Scheduler Card
+#
+# SETUP 3: Pokročilá (Plná automatizace)
+# ────────────────────────────────────────────────────────────────────────
+# - Všechny ze SETUP 2
+# - Wyoming (offline asistent)
+# - Matrix Bot (komunikace)
+# - Samba Backup (zálohování)
+# - SSH Terminal (správa)
+# - Pi-Hole (DNS/reklamy)
+#
+# ============================================================================
+# POZNÁMKY
+# ============================================================================
+#
+# - Tento soubor je YAML, ale neobsahuje pracovní konfiguraci
+# - Je to jen reference s komentáři
+# - Repozitáře se instalují přes HACS UI nebo scripty
+# - Pro automatickou instalaci viz ./scripts/install_addons.sh
+# - Aktualizujte repozitáře pravidelně pro security patche
+#
+# ============================================================================
