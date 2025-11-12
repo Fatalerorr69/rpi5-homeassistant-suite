@@ -2,9 +2,79 @@
 
 Všechny příznačné změny v tomto projektu jsou zdokumentovány v tomto souboru.
 
+## [2.4.3] - 2025-11-12
+
+### Nové Funkce v 2.4.3 (setup_master.sh v2.3)
+
+- **Detekce Home Assistant instalace**
+  - Automatická detekce typu: systemd, Docker, Supervised
+  - Zjišťování aktuální verze a konfigurace
+  - Status reporting
+
+- **Detekce OS varianty**
+  - Rozpoznání: Ubuntu, Debian, Armbian
+  - Kompatibilita s RPi5 a dalšími SBC
+  - Version reporting
+
+- **Správa Disků a Úložiště**
+  - `list_available_disks()` — Výpis dostupných jednotek
+  - `format_disk()` — Formátování s volbou filesystému (ext4/btrfs/xfs)
+  - `mount_disk()` — Připojení s trvalým zápase do `/etc/fstab`
+  - `expand_partition()` — Rozšíření partition pro RPi5
+  - `backup_before_format()` — Automatický backup Docker volumes
+
+- **Migrace Home Assistant**
+  - `migrate_ha_installation()` — Migrování mezi instalacemi
+  - Podpora: systemd ↔ Docker ↔ Supervised
+  - Bezpečný přesun s backupem
+  - Zachování konfigurace
+
+- **Interaktivní Menu pro OS (8 voleb)**
+  - Detekce instalace
+  - Detekce OS
+  - Výpis disků
+  - Formátování
+  - Připojení disku
+  - Rozšíření partition
+  - Migrace instalace
+  - Zpět na hlavní menu
+
+- **Aktualizované Hlavní Menu (14 voleb)**
+  - Přidán oddíl "💾 OS A ÚLOŽIŠTĚ"
+  - Volba 9: Správa OS a migrace
+  - Volba 10: Backup konfigurace
+
+### Bezpečnostní Prvky v 2.4.3
+
+- Potvrzení před formátováním ("ano" ke schválení)
+- Kontrola, zda je disk připojen
+- Bezpečnost: Backup před jakoukoliv změnou
+- Validace zařízení (`test -b /dev/sdX`)
+- UUID-based mount pro spolehlivost
+
+### Technické Detaily v 2.4.3
+
+- 1327 řádků setup_master.sh (zvýšení z 986)
+- Nové funkce: 7× detekce/správy
+- Submenu: `os_management_menu()` s 8 volbami
+- Integrace s `lsblk`, `blkid`, `mount`, `fstab`
+- Docker volume backup přes `docker run` + tar
+- Systemd integration pro automatické mount
+
+### Kompatibilita v 2.4.3
+
+- ✅ Ubuntu 22.04+ (Jammy, Noble)
+- ✅ Debian 12+ (Bookworm)
+- ✅ Armbian (všechny verze na RPi5)
+- ✅ Raspberry Pi 5 (primary target)
+- ✅ Raspberry Pi 4, 3 (tested)
+- ✅ x86_64 (VM/počítač)
+
+---
+
 ## [2.4.2] - 2025-11-12
 
-### Refaktoring v 2.4.2
+### Setup_master.sh v2.2 v 2.4.2
 
 - **setup_master.sh v2.2** — Komplexní vylepšení robustnosti a automatických oprav
   - ✨ Přidán `set -euo pipefail` + graceful error handling
@@ -23,87 +93,34 @@ Všechny příznačné změny v tomto projektu jsou zdokumentovány v tomto soub
     - Ověření Node-RED (1880)
     - Status reporting
   - 🪤 Trap a cleanup funkce pro korektní ukončení
-  - 📊 **Nové menu s 12 volbami:**
-    - Kompletní instalace
-    - Pouze Docker komponenty
-    - Kontrola a oprava YAML
-    - Synchronizace konfigurace
-    - Health check
-    - Diagnostika systému
-    - Oprava běžných problémů
-    - Čištění a optimalizace
-    - Zobrazení logů
-    - Restart Docker služef
-    - Interaktivní diagnóza
-    - Ukončení
-  - 🔍 **Interaktivní diagnostika s 8 volbami:**
-    - Health check
-    - Docker status
-    - Disk prostor
-    - RAM a CPU
-    - Síťové nastavení
-    - Logy Home Assistant
-    - Logy Mosquitto
-    - Logy Node-RED
-  - 🚀 Parametry: `--verbose`, `--skip-deps`, `--dry-run`, `--no-fix`
+  - 📊 **Nové menu s 12 volbami** (rozšířeno z 11)
+  - 🔍 **Interaktivní diagnostika s 8 volbami**
   - 📖 Obsáhlá help (`./setup_master.sh --help`)
   - 🎯 Od 189 → 986 řádků kvalitního kódu s komentáři
-
-### Technické Detaily v 2.4.2
-
-- Kontrola Docker daemon stavu před operacemi
-- Detekce kompatibility `docker-compose` vs `docker compose`
-- PyYAML instalace s retry logikou (apt → pip3)
-- Timeout pro curl operace (2s default)
-- Logování metadat: timestamp, user, Python verze, Docker verze
-- Rotace logů (max 10 posledních) ke kontrole disk prostoru
-- Menu s barevnými ANSI box-drawing znaky
-- Kontrola admin práv pro kritické operace
 
 ---
 
 ## [2.4.1] - 2025-11-12
 
-### Nové Funkce v 2.4.1
+### Nové Komponenty v 2.4.1
 
 - **README.md** — Přidána sekce "Užitečné Python snippety"
   - Příklad: Stažení HACS z GitHub Releases s využitím `requests` + `zipfile`
-  - Dokumentace zavislostí a best practices
 - **scripts/validate_yaml.sh** — Vylepšená YAML validace
-  - Oddělení standard YAML (docker-compose.yml) od Home Assistant config files
-  - Přímá integrace s `validate_ha_config.py` pro custom tagy (!include, !secret)
-  - Jasná diagnostika chyb
 - **.github/copilot-instructions.md** — Komplexní aktualizace AI instrukcí
-  - Strukturovaná architektura (Big Picture)
-  - Praktické workflow pro vývojáře
-  - Tabulka klíčových skriptů s příklady
-  - Konvence pro bash, YAML, dokumentaci
-  - Kritické detaily a pasti (CONFIG/ vs config/, PyYAML tagy, oprávnění)
 
-### Refaktoring v 2.4.1
+### Install.sh v2.1 v 2.4.1
 
 - **install.sh v2.1** — Komplexní vylepšení robustnosti a univerzality
-  - ✨ Přidán `set -euo pipefail` pro korektní error handling (s graceful fallbackem pro dev kontejnery)
+  - ✨ Přidán `set -euo pipefail` pro korektní error handling
   - 🔍 Detekce OS (Ubuntu, Debian, Armbian) přes `/etc/os-release`
-  - 🎨 Barvené výstupy (RED/GREEN/YELLOW/BLUE) + strukturované logování
-  - 🔄 Retry logika pro selhavší instalace (default: 3 pokusy, 5s delay)
-  - 🏗️ Detekce CPU architektury (aarch64, armv7l, x86_64) pro os-agent
-  - ⏱️ Timeout pro wget/curl (30s) proti vyřazení procesů
+  - 🎨 Barvené výstupy + strukturované logování
+  - 🔄 Retry logika pro selhavší instalace (3 pokusy, 5s delay)
+  - 🏗️ Detekce CPU architektury (aarch64, armv7l, x86_64)
+  - ⏱️ Timeout pro wget/curl (30s)
   - 🚀 Volby: `--skip-docker`, `--skip-compose`, `--skip-agent`, `--dry-run`, `--retry N`
   - 📋 Logování do `~/.homeassistant_install/install_TIMESTAMP.log`
-  - 🛡️ Kontrola sudo s fallbackem pro dev kontejnery (bez sudo)
-  - 🎯 Lepší error zprávy a diagnostika
-  - 📖 Obsáhlá help (`./install.sh help`)
-  - 🔗 Integrace s detect_os(), command_exists(), run_with_retry()
   - 💾 Od 175 do 525 řádků kvalitního kódu s komentáři
-
-### Technické Detaily
-
-- `install.sh` nyní importuje `sudo` jen když je dostupný a potřebný
-- Jednotlivé balíčky se instalují s možností preskočit na chybu
-- os-agent detekuje správnou verzi pro ARM/ARM64/x86_64 automaticky
-- Log obsahuje metadata: timestamp, user, arch, script version
-- Dry-run mód (`--dry-run`) simuluje bez skutečných změn
 
 ---
 
@@ -133,14 +150,8 @@ Všechny příznačné změny v tomto projektu jsou zdokumentovány v tomto soub
   - Opraveny duplikátní pole
   - MQTT broker nyní používá 'mosquitto' (Docker network DNS)
   - Všechny custom tagy se nyní validují správně
-- **merge_configs.sh** — aktualizován pro nový validátor
-  - Používá `validate_ha_config.py` místo generic yaml.safe_load()
-  - Správně rozpoznává Home Assistant YAML syntax
 
-### Vylepšení v 2.4.0-final
-
-- README.md — přidán odkaz na nový Configuration Management Guide
-- Dokumentace — kompletní popis workflow konfigurace a synchronizace
+---
 
 ## [2.3.0] - 2025-11-12
 
@@ -165,6 +176,8 @@ Všechny příznačné změny v tomto projektu jsou zdokumentovány v tomto soub
 - README.md — přidán `scripts/system_check.sh` do dokumentace
 - Automatická oprava oprávnění skriptů při detekci chyby
 
+---
+
 ## [2.2.0] - 2025-11-12
 
 ### Nové Funkce v 2.2.0
@@ -180,6 +193,8 @@ Všechny příznačné změny v tomto projektu jsou zdokumentovány v tomto soub
 
 - README.md — nový oddíl "Automatizované nasazení" s GitHub Actions, Ansible a autocommit workflow
 - Post-install menu — kompletní integraci s file explorer, maintenance, monitoring a storage setupem
+
+---
 
 ## [2.1.0] - 2025-11-11
 
@@ -212,6 +227,8 @@ Všechny příznačné změny v tomto projektu jsou zdokumentovány v tomto soub
 
 - Zajištěna dostupnost PyYAML pro YAML validaci
 - Opraveny Markdown linting problémy v dokumentaci
+
+---
 
 ## [2.0.0] - 2025-11-10
 
