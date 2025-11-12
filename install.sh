@@ -6,7 +6,7 @@
 # Tento skript instaluje základní závislosti
 # ==========================================
 
-set -e
+set -uo pipefail  # Bez -e, aby se script nezastavil na chybě
 
 # Proměnné
 LOG_FILE="/home/$(whoami)/install_dependencies.log"
@@ -17,12 +17,13 @@ log() {
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
 }
 
-# Funkce pro kontrolu chyb
+# Funkce pro kontrolu kritických chyb
 check_error() {
     if [ $? -ne 0 ]; then
         log "❌ Chyba: $1"
-        exit 1
+        return 1  # Vrátit chybu místo exit
     fi
+    return 0
 }
 
 # Hlavní instalační funkce
@@ -90,44 +91,56 @@ install_dependencies() {
     log "Instalace Dockeru..."
     if ! command -v docker &> /dev/null; then
         curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
-        sudo sh /tmp/get-docker.sh
-        check_error "Instalace Dockeru selhala"
+        if sudo sh /tmp/get-docker.sh; then
+            log "✅ Docker nainstalován"
+        else
+            log "⚠️  Instalace Dockeru selhala (přeskakuji - nemusí být k dispozici v kontejneru)"
+        fi
     else
         log "✅ Docker je již nainstalován"
     fi
 
     # Přidání uživatele do Docker skupiny
     log "Přidání uživatele $USER_NAME do Docker skupiny..."
-    sudo usermod -aG docker "$USER_NAME"
+    sudo usermod -aG docker "$USER_NAME" 2>/dev/null || log "⚠️  Přidání do docker skupiny selhalo"
 
     # Instalace Docker Compose
     log "Instalace Docker Compose..."
     if ! command -v docker-compose &> /dev/null; then
-        sudo apt-get install -y docker-compose-plugin
-        check_error "Instalace Docker Compose selhala"
+        if sudo apt-get install -y docker-compose-plugin; then
+            log "✅ Docker Compose nainstalován"
+        else
+            log "⚠️  Instalace Docker Compose selhala (přeskakuji - nemusí být k dispozici)"
+        fi
     else
         log "✅ Docker Compose je již nainstalován"
     fi
 
-    # Instalace os-agent
+    # Instalace os-agent (volitelná)
     log "Instalace os-agent..."
-    if ! dpkg -l | grep -q os-agent; then
-        wget -O /tmp/os-agent_1.6.0_linux_aarch64.deb \
-            https://github.com/home-assistant/os-agent/releases/download/1.6.0/os-agent_1.6.0_linux_aarch64.deb
-        sudo dpkg -i /tmp/os-agent_1.6.0_linux_aarch64.deb
-        sudo systemctl enable haos-agent
-        sudo systemctl start haos-agent
-        check_error "Instalace os-agent selhala"
+    if ! dpkg -l 2>/dev/null | grep -q os-agent; then
+        if wget -O /tmp/os-agent_1.6.0_linux_aarch64.deb \
+            https://github.com/home-assistant/os-agent/releases/download/1.6.0/os-agent_1.6.0_linux_aarch64.deb 2>/dev/null; then
+            if sudo dpkg -i /tmp/os-agent_1.6.0_linux_aarch64.deb 2>/dev/null; then
+                sudo systemctl enable haos-agent 2>/dev/null || true
+                sudo systemctl start haos-agent 2>/dev/null || true
+                log "✅ os-agent nainstalován"
+            else
+                log "⚠️  Instalace os-agent balíčku selhala"
+            fi
+        else
+            log "⚠️  Stažení os-agent selhalo"
+        fi
     else
         log "✅ os-agent je již nainstalován"
     fi
 
     # Nastavení služeb
     log "Nastavení systémových služeb..."
-    sudo systemctl enable docker
-    sudo systemctl start docker
-    sudo systemctl enable systemd-resolved
-    sudo systemctl start systemd-resolved
+    sudo systemctl enable docker 2>/dev/null || true
+    sudo systemctl start docker 2>/dev/null || true
+    sudo systemctl enable systemd-resolved 2>/dev/null || true
+    sudo systemctl start systemd-resolved 2>/dev/null || true
 
     # Nastavení časového pásma
     log "Nastavení časového pásma na Europe/Prague..."

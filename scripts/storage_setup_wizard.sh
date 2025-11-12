@@ -352,28 +352,15 @@ setup_tiered_storage_impl() {
     show_info "Vytvářím adresářové struktury..."
     
     # NVMe - HOT tier
-    sudo mkdir -p "$nvme_mount"/{
-        hass_data,          # Recorder
-        hass_cache,         # TTS, images
-        docker_volumes,     # Docker containers
-        backups/daily       # Daily backups
-    }
+    # NVMe - HOT tier
+    sudo mkdir -p "$nvme_mount"/{hass_data,hass_cache,docker_volumes,backups/daily}
     
     # SSD - WARM tier
-    sudo mkdir -p "$ssd_mount"/{
-        hass_config,        # HA configuration
-        docker_data,        # Docker daemon
-        backups/weekly      # Weekly backups
-    }
+    sudo mkdir -p "$ssd_mount"/{hass_config,docker_data,backups/weekly}
     
     # HDD - COLD tier (pokud je zadán)
     if [ -n "$hdd_disk" ]; then
-        sudo mkdir -p "$hdd_mount"/{
-            media_archive,        # Média
-            recordings_archive,   # Nahrávky
-            backups/monthly,      # Monthly backups
-            historical_data      # History
-        }
+        sudo mkdir -p "$hdd_mount"/{media_archive,recordings_archive,backups/monthly,historical_data}
         show_status "HDD struktura: $hdd_mount"
     fi
     

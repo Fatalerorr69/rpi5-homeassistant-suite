@@ -3,8 +3,8 @@
 [0;34m║ RPi5 Home Assistant Configuration Verification
 [0;34m╚══════════════════════════════════════════╝[0m
 
-Report: /workspaces/rpi5-homeassistant-suite/verification_report_20251112_030847.txt
-Time: Wed Nov 12 03:08:47 UTC 2025
+Report: /workspaces/rpi5-homeassistant-suite/verification_report_20251112_031617.txt
+Time: Wed Nov 12 03:16:17 UTC 2025
 
 
 [0;34m╔══════════════════════════════════════════╗[0m
@@ -13,8 +13,7 @@ Time: Wed Nov 12 03:08:47 UTC 2025
 
 [0;32m✅ PASS[0m: Adresář existuje: CONFIG
 [0;32m✅ PASS[0m: Adresář existuje: config
-[0;32m✅ PASS[0m: Adresář existuje: config_backup_20251112_030329
-[0;32m✅ PASS[0m: Adresář existuje: config_backup_20251112_030554
+[1;33m⚠️  WARN[0m: Backup adresář neexistuje (je to OK): config_backup_*
 [0;32m✅ PASS[0m: Adresář existuje: scripts
 [0;32m✅ PASS[0m: Adresář existuje: .github
 [0;32m✅ PASS[0m: Adresář existuje: docs
@@ -62,14 +61,14 @@ Time: Wed Nov 12 03:08:47 UTC 2025
 [0;32m✅ PASS[0m: Git repository inicializováno
 [0;32m✅ PASS[0m: Aktuální branch: main
 [0;32m✅ PASS[0m: Poslední tag: v2.4.0-final
-[1;33m⚠️  WARN[0m: Máte 3 necommitnutých změn
+[1;33m⚠️  WARN[0m: Máte 21 necommitnutých změn
 
 [0;34m╔══════════════════════════════════════════╗[0m
 [0;34m║ 7. Oprávnění souborů
 [0;34m╚══════════════════════════════════════════╝[0m
 
-[1;33m⚠️  WARN[0m: install.sh není spustitelný (chmod +x)
-[1;33m⚠️  WARN[0m: setup_master.sh není spustitelný (chmod +x)
+[0;32m✅ PASS[0m: install.sh je spustitelný
+[0;32m✅ PASS[0m: setup_master.sh je spustitelný
 [0;32m✅ PASS[0m: merge_configs.sh je spustitelný
 
 [0;34m╔══════════════════════════════════════════╗[0m
@@ -98,7 +97,7 @@ Time: Wed Nov 12 03:08:47 UTC 2025
 
 Prošlo:      [0;32m32[0m
 Selhalo:     [0;31m0[0m
-Varování:    [1;33m3[0m
+Varování:    [1;33m2[0m
 
 [0;32m✅ VERIFIKACE ÚSPĚŠNÁ[0m
 
