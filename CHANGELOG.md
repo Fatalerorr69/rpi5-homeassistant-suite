@@ -2,6 +2,41 @@
 
 Všechny příznačné změny v tomto projektu jsou zdokumentovány v tomto souboru.
 
+## [2.4.0-final] - 2025-11-12
+
+### Nové Funkce v 2.4.0-final
+
+- Home Assistant YAML Validátor — `scripts/validate_ha_config.py` pro správnou validaci YAML s podporou custom tagů
+  - Rozpoznává !include, !secret, !include_dir_merge_named, !include_dir_merge_list, atd.
+  - Ověřuje konfiguraci v Home Assistant kontextu
+  - Integrován do merge_configs.sh
+- Configuration Management Guide — `docs/CONFIGURATION_MANAGEMENT.md` s kompletní dokumentací
+  - Vysvětlení CONFIG/ vs config/ adresářů
+  - YAML workflow a best practices
+  - Troubleshooting YAML chyb
+  - Příklady balíčků a automatizací
+
+### Opravy v 2.4.0-final
+
+- **install.sh** — opravena instalace balíčků s graceful error handling
+  - Zběh z hardcodeovaného apt-get s dlouhým seznamem
+  - Jednotlivá instalace každého balíčku s možností preskočit chybějící
+  - Odstraněn `libtiff5` (neexistuje v Debian Bookworm pro RPi5)
+  - Přidány alternativy: `libopenjp2-7-dev`, `libturbojpeg0-dev`
+- **configuration.yaml** — správná struktura YAML
+  - Přesunuta `homeassistant:` na začátek souboru
+  - Opraveny duplikátní pole
+  - MQTT broker nyní používá 'mosquitto' (Docker network DNS)
+  - Všechny custom tagy se nyní validují správně
+- **merge_configs.sh** — aktualizován pro nový validátor
+  - Používá `validate_ha_config.py` místo generic yaml.safe_load()
+  - Správně rozpoznává Home Assistant YAML syntax
+
+### Vylepšení v 2.4.0-final
+
+- README.md — přidán odkaz na nový Configuration Management Guide
+- Dokumentace — kompletní popis workflow konfigurace a synchronizace
+
 ## [2.3.0] - 2025-11-12
 
 ### Nové Funkce v 2.3.0

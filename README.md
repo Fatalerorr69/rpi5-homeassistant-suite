@@ -84,6 +84,7 @@ docker-compose restart homeassistant
 
 ## 📚 Dokumentace
 
+- `docs/CONFIGURATION_MANAGEMENT.md` — **Správa konfigurace** (CONFIG/ vs config/, YAML validace, synchronizace)
 - `docs/DEVELOPER_GUIDE.md` — Průvodce pro vývojáře
 - `docs/TROUBLESHOOTING.md` — Řešení běžných problémů
 - `docs/STORAGE_GUIDE.md` — Správa disk, zálohování, externí úložiště
