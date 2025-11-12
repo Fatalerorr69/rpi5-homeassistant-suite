@@ -2,6 +2,66 @@
 
 Všechny příznačné změny v tomto projektu jsou zdokumentovány v tomto souboru.
 
+## [2.4.2] - 2025-11-12
+
+### Refaktoring v 2.4.2
+
+- **setup_master.sh v2.2** — Komplexní vylepšení robustnosti a automatických oprav
+  - ✨ Přidán `set -euo pipefail` + graceful error handling
+  - 🎨 Barvené logování (6 úrovní: info, success, warn, error, debug) s ANSI kódy
+  - 📋 Strukturované logování do `~/.ha_suite_install/` s rotací starých logů (max 10)
+  - 🔧 **Auto-opravy funkcí `auto_fix_issues()`:**
+    - Oprávnění skriptů (`chmod +x *.sh`)
+    - Přidání uživatele do Docker group
+    - Přidání uživatele do dialout group (Zigbee USB)
+    - Vytváření `config/` adresáře při chybě
+    - Vytváření `~/.ssh` s správnými právy
+  - 🔄 Retry logika pro Docker a síťové operace (3 pokusy, 5s delay)
+  - 🏥 **Health check funkcí `health_check()`:**
+    - Ověření Home Assistant (8123)
+    - Ověření Mosquitto MQTT (1883)
+    - Ověření Node-RED (1880)
+    - Status reporting
+  - 🪤 Trap a cleanup funkce pro korektní ukončení
+  - 📊 **Nové menu s 12 volbami:**
+    - Kompletní instalace
+    - Pouze Docker komponenty
+    - Kontrola a oprava YAML
+    - Synchronizace konfigurace
+    - Health check
+    - Diagnostika systému
+    - Oprava běžných problémů
+    - Čištění a optimalizace
+    - Zobrazení logů
+    - Restart Docker služef
+    - Interaktivní diagnóza
+    - Ukončení
+  - 🔍 **Interaktivní diagnostika s 8 volbami:**
+    - Health check
+    - Docker status
+    - Disk prostor
+    - RAM a CPU
+    - Síťové nastavení
+    - Logy Home Assistant
+    - Logy Mosquitto
+    - Logy Node-RED
+  - 🚀 Parametry: `--verbose`, `--skip-deps`, `--dry-run`, `--no-fix`
+  - 📖 Obsáhlá help (`./setup_master.sh --help`)
+  - 🎯 Od 189 → 986 řádků kvalitního kódu s komentáři
+
+### Technické Detaily v 2.4.2
+
+- Kontrola Docker daemon stavu před operacemi
+- Detekce kompatibility `docker-compose` vs `docker compose`
+- PyYAML instalace s retry logikou (apt → pip3)
+- Timeout pro curl operace (2s default)
+- Logování metadat: timestamp, user, Python verze, Docker verze
+- Rotace logů (max 10 posledních) ke kontrole disk prostoru
+- Menu s barevnými ANSI box-drawing znaky
+- Kontrola admin práv pro kritické operace
+
+---
+
 ## [2.4.1] - 2025-11-12
 
 ### Nové Funkce v 2.4.1
