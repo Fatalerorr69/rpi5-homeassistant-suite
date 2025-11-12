@@ -258,7 +258,7 @@ check_yaml_files() {
     fi
     
     local yaml_files=(
-        "docker-compose.yml"
+        "docker compose.yml"
         "CONFIG/configuration.yaml"
         "CONFIG/automations.yaml"
     )
@@ -353,8 +353,8 @@ check_docker() {
 check_docker_compose() {
     log info "Kontrola Docker Compose..."
     
-    if command -v docker-compose &>/dev/null; then
-        log success "docker-compose: $(docker-compose --version 2>&1)"
+    if command -v docker compose &>/dev/null; then
+        log success "docker compose: $(docker compose --version 2>&1)"
         return 0
     fi
     
@@ -371,8 +371,8 @@ check_docker_compose() {
 start_docker_containers() {
     log info "Spouštění Docker služeb..."
     
-    if [ ! -f "$DOCKER_COMPOSE_DIR/docker-compose.yml" ]; then
-        log error "docker-compose.yml nebyl nalezen"
+    if [ ! -f "$DOCKER_COMPOSE_DIR/docker compose.yml" ]; then
+        log error "docker compose.yml nebyl nalezen"
         return 1
     fi
     
@@ -385,14 +385,14 @@ start_docker_containers() {
     fi
     
     # Spuštění s retry logikou
-    if run_with_retry "docker-compose up -d" \
-        docker-compose up -d 2>&1; then
+    if run_with_retry "docker compose up -d" \
+        docker compose up -d 2>&1; then
         log success "Docker služby spuštěny"
         sleep 5  # Dej čas na inicializaci
         
         # Zobrazení běžících kontejnerů
         log info "Běžící kontejnery:"
-        docker-compose ps | tee -a "$LOG_FILE"
+        docker compose ps | tee -a "$LOG_FILE"
         
         return 0
     fi
@@ -471,10 +471,10 @@ run_diagnostics() {
         echo
         echo "=== DOCKER COMPOSE STATUS ==="
         cd "$DOCKER_COMPOSE_DIR"
-        docker-compose ps 2>/dev/null || echo "N/A"
+        docker compose ps 2>/dev/null || echo "N/A"
         echo
         echo "=== LOGY ==="
-        docker-compose logs --tail=20 homeassistant 2>/dev/null | head -20 || echo "N/A"
+        docker compose logs --tail=20 homeassistant 2>/dev/null | head -20 || echo "N/A"
     } | tee -a "$LOG_FILE"
     
     log success "Diagnostika: Hotovo"
@@ -742,7 +742,7 @@ migrate_ha_installation() {
             ;;
         docker)
             log info "Zastavuji Docker kontejnery..."
-            docker-compose down 2>/dev/null || true
+            docker compose down 2>/dev/null || true
             ;;
         supervised)
             log info "Zastavuji Supervised Home Assistant..."
@@ -946,9 +946,9 @@ restart_docker() {
     
     cd "$DOCKER_COMPOSE_DIR"
     
-    if docker-compose ps &>/dev/null 2>&1 || docker compose ps &>/dev/null 2>&1; then
+    if docker compose ps &>/dev/null 2>&1 || docker compose ps &>/dev/null 2>&1; then
         log info "Zastavuji kontejnery..."
-        docker-compose down 2>/dev/null || docker compose down 2>/dev/null || true
+        docker compose down 2>/dev/null || docker compose down 2>/dev/null || true
         
         sleep 3
         
@@ -1068,8 +1068,8 @@ main() {
     log info "════════════════════════════════════════════════════"
     
     # Kontrola, zda je skript spuštěn ze správného adresáře
-    if [ ! -f "$DOCKER_COMPOSE_DIR/docker-compose.yml" ]; then
-        log error "Skript musí být spuštěn z adresáře s docker-compose.yml"
+    if [ ! -f "$DOCKER_COMPOSE_DIR/docker compose.yml" ]; then
+        log error "Skript musí být spuštěn z adresáře s docker compose.yml"
         log error "Aktuální adresář: $PWD"
         exit 1
     fi
@@ -1117,25 +1117,25 @@ install_docker_components() {
     
     cd "$DOCKER_COMPOSE_DIR"
     
-    # Kontrola docker-compose.yml
-    if [ ! -f "docker-compose.yml" ]; then
-        log "❌ Chybí docker-compose.yml"
+    # Kontrola docker compose.yml
+    if [ ! -f "docker compose.yml" ]; then
+        log "❌ Chybí docker compose.yml"
         return 1
     fi
     
     # Synchronizace zdrojových konfigurací a spuštění služeb
     if ! sync_configs; then
-        log "❌ Sync config failed, aborting docker-compose start"
+        log "❌ Sync config failed, aborting docker compose start"
         return 1
     fi
 
     # Spuštění služeb
     log "Spouštění služeb..."
-    docker-compose up -d
+    docker compose up -d
     
     # Kontrola běžících kontejnerů
     log "Kontrola kontejnerů..."
-    docker-compose ps
+    docker compose ps
     
     log "✅ Docker komponenty nainstalovány"
 }
@@ -1173,7 +1173,7 @@ run_diagnostics() {
     
     echo "=== DOCKER ==="
     docker --version
-    docker-compose --version
+    docker compose --version
     docker ps
     echo
     
@@ -1262,8 +1262,8 @@ main() {
     log "Spuštění RPi5 Home Assistant Suite"
     
     # Kontrola, zda je skript spuštěn z správného adresáře
-    if [ ! -f "docker-compose.yml" ]; then
-        log "❌ Skript musí být spuštěn z adresáře s docker-compose.yml"
+    if [ ! -f "docker compose.yml" ]; then
+        log "❌ Skript musí být spuštěn z adresáře s docker compose.yml"
         exit 1
     fi
     
