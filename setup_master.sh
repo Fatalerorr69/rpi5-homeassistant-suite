@@ -267,14 +267,28 @@ check_yaml_files() {
     
     for file in "${yaml_files[@]}"; do
         if [ -f "$SCRIPT_DIR/$file" ]; then
-            if python3 -c "import yaml; yaml.safe_load(open('$SCRIPT_DIR/$file'))" 2>/dev/null; then
+            # Use HA-aware YAML validator (recognizes !include, !secret, etc.)
+            python3 - <<PYEOF 2>/dev/null
+import yaml, sys
+
+def secret_constructor(loader, node): return '!secret'
+def include_constructor(loader, node): return '!include'
+def include_dir_constructor(loader, node): return '!include_dir_merge_named'
+
+yaml.add_constructor('!secret', secret_constructor)
+yaml.add_constructor('!include', include_constructor)
+yaml.add_constructor('!include_dir_merge_named', include_dir_constructor)
+
+try:
+    yaml.safe_load(open('$SCRIPT_DIR/$file'))
+    sys.exit(0)
+except Exception as e:
+    sys.exit(1)
+PYEOF
+            
+            if [ $? -eq 0 ]; then
                 log success "$file: ✅ Platný YAML"
             else
-                # Pokus se opravit běžné chyby
-                if [ "$AUTO_FIX" -eq 1 ]; then
-                    log warn "$file: Pokus o automatickou opravu..."
-                    # Zde by byla logika pro opravu - pro teď jen warning
-                fi
                 log error "$file: ❌ Neplatný YAML syntax"
                 failed=$((failed + 1))
             fi
