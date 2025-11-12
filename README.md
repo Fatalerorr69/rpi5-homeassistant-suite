@@ -167,6 +167,57 @@ Automatizuje synchronizaci, validaci a commit konfiguračních změn.
 # → Deploy.yml se automaticky spustí (pokud je nastaveno)
 ```
 
+## 🎨 HACS — Home Assistant Community Store
+
+HACS umožňuje instalaci tisíců custom komponent, integrací a frontend karet od komunity.
+
+### Dostupné repozitáře
+
+| Kategorie | Komponenta | Popis |
+|-----------|-----------|-------|
+| **Frontend** | Mushroom Cards | Krásné Material Design 3 karty |
+| | Button Card | Flexibilní tlačítka s vlastními styly |
+| | ApexCharts | Grafy a statistiky |
+| **Integrace** | Adaptive Lighting | Chytrá osvětlení podle času |
+| | Local Tuya | Ovládání Tuya zařízení bez cloudu |
+| | Browser Mod | Fernsteuerung webových prohlížečů |
+| | System Monitor | Monitoring CPU, RAM, disk |
+| **Notifikace** | Ntfy | Push notifikace |
+| | Telegram Bot | Zprávy přes Telegram |
+| **Offline AI** | Wyoming | Offline zpracování řeči |
+
+### Instalace HACS
+
+1. **Automaticky (doporučeno):**
+
+   ```bash
+   ./scripts/install_hacs_repos.sh --install-essentials
+   ```
+
+2. **Manuálně v UI:**
+   - Settings → Devices & Services → Create Automation
+   - Stáhnout z <https://hacs.io>
+   - Umístit do `config/custom_components/hacs`
+   - Restart Home Assistant
+
+### Správa repozitářů
+
+```bash
+# Vypsat všechny dostupné repozitáře
+./scripts/install_hacs_repos.sh --list
+
+# Nainstalovat konkrétní repozitář
+./scripts/install_hacs_repos.sh --install mushroom
+
+# Nainstalovat všechny doporučené
+./scripts/install_hacs_repos.sh --install-all
+
+# Kontrola stavu instalace
+./scripts/install_hacs_repos.sh --check
+```
+
+**Více info:** Viz `CONFIG/packages/hacs_repositories.yaml` — kompletní seznam s popisy.
+
 ## 🧪 Testování
 
 ```bash

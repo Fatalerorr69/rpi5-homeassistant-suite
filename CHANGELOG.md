@@ -2,6 +2,48 @@
 
 Všechny příznačné změny v tomto projektu jsou zdokumentovány v tomto souboru.
 
+## [2.4.4] - 2025-11-12
+
+### Nové Funkce v 2.4.4 — HACS Repozitáře a Custom Integraces
+
+- **HACS Repozitáře** — Snadná instalace 20+ custom komponent
+  - Frontend: Mushroom Cards, Button Card, ApexCharts, Mini Media Player
+  - Integrace: Adaptive Lighting, Local Tuya, Browser Mod, System Monitor
+  - Notifikace: Ntfy, Telegram Bot
+  - Offline AI: Wyoming, OpenWakeWord
+  
+- **Install Script** — `scripts/install_hacs_repos.sh` pro správu repozitářů
+  - `--list` — Vypsat dostupné repozitáře
+  - `--install-all` — Nainstalovat všechny doporučené
+  - `--install-essentials` — Jen nejdůležitější (mushroom, local-tuya, system-monitor)
+  - `--check` — Ověřit stav instalace
+  
+- **HACS Balíček** — `CONFIG/packages/hacs_repositories.yaml`
+  - Kompletní dokumentace všech dostupných repozitářů
+  - Tipy na kombinace a best practices
+  - Instrukce pro ruční přidání repozitářů
+  
+- **README Aktualizace** — Nová sekce "🎨 HACS — Home Assistant Community Store"
+  - Tabulka s dostupnými komponentami
+  - Příklady instalace
+  - Odkazy na dokumentaci
+
+### Technické Detaily v 2.4.4
+
+- HACS skript s 18+ custom repozitáři v databázi
+- Rozdělení na frontend, integration a addon kategorie
+- Docker-aware — podpora docker-compose + kubectl
+- Barevný výstup a podrobné logování
+- Kontrola stavu Docker a Home Assistant kontejneru
+
+### Kompatibilita v 2.4.4
+
+- ✅ HACS 1.33.0+
+- ✅ Home Assistant 2023.1+
+- ✅ Všechny custom komponenty jsou volitelné (HA běží bez nich)
+
+---
+
 ## [2.4.3] - 2025-11-12
 
 ### Nové Funkce v 2.4.3 (setup_master.sh v2.3)
