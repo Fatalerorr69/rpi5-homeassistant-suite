@@ -90,6 +90,29 @@ docker-compose restart homeassistant
 - `docs/STORAGE_GUIDE.md` — Správa disk, zálohování, externí úložiště
 - `CHANGELOG.md` — Historie verzí a změn
 
+### Užitečné Python snippety
+
+**Stažení HACS (Home Assistant Community Store) releaseu:**
+
+```python
+import requests
+import io
+import zipfile
+
+# Stažení nejnovějšího HACS z GitHub Releases
+hacs_url = "https://github.com/hacs/integration/releases/latest/download/hacs.zip"
+response = requests.get(hacs_url, timeout=30)
+response.raise_for_status()
+
+# Práce s obsahem (v paměti bez ukládání)
+zip_bytes = io.BytesIO(response.content)
+with zipfile.ZipFile(zip_bytes) as z:
+    z.extractall(path="/tmp/hacs_extracted")  # Rozbalení
+```
+
+**Závislosti:** `requests` (`pip install requests`)  
+**Poznámka:** Pokud rozbalujete do `config/`, synchronizujte přes `./scripts/sync_config.sh` z `CONFIG/` — viz `docs/CONFIGURATION_MANAGEMENT.md`.
+
 ## 🚀 Automatizované nasazení
 
 ### GitHub Actions (CI/CD)
