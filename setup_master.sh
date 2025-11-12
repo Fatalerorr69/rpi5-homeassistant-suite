@@ -490,6 +490,347 @@ fix_issues() {
     log success "Opravy: Hotovo"
 }
 
+# ============ OS FORMATOVÁNÍ A MIGRACE ============
+
+# Detekce typu instalace Home Assistant
+detect_ha_installation_type() {
+    log info "🔍 Detekce typu Home Assistant instalace..."
+    
+    if systemctl is-active --quiet homeassistant 2>/dev/null; then
+        log success "Detekováno: Systemd Home Assistant"
+        echo "systemd"
+        return 0
+    fi
+    
+    if docker ps 2>/dev/null | grep -q homeassistant; then
+        log success "Detekováno: Docker Home Assistant"
+        echo "docker"
+        return 0
+    fi
+    
+    if dpkg -l 2>/dev/null | grep -q homeassistant-supervised; then
+        log success "Detekováno: Home Assistant Supervised"
+        echo "supervised"
+        return 0
+    fi
+    
+    log warn "Žádná instalace Home Assistant nenalezena"
+    echo "none"
+    return 1
+}
+
+# Detekce OS varianty
+detect_os_variant() {
+    log info "🔍 Detekce OS varianty..."
+    
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        case "$ID" in
+            ubuntu)
+                log success "OS: Ubuntu $VERSION_ID"
+                echo "ubuntu"
+                ;;
+            debian)
+                log success "OS: Debian $VERSION_ID"
+                echo "debian"
+                ;;
+            armbian)
+                log success "OS: Armbian"
+                echo "armbian"
+                ;;
+            *)
+                log warn "OS: Neznámý - $PRETTY_NAME"
+                echo "unknown"
+                ;;
+        esac
+    fi
+}
+
+# Detekce připojených disků
+list_available_disks() {
+    log info "🔍 Dostupné diskové jednotky:"
+    echo ""
+    lsblk -d -n -l -o NAME,SIZE,TYPE 2>/dev/null | while read disk size type; do
+        if [ -b "/dev/$disk" ] && [ "$type" = "disk" ]; then
+            echo "  /dev/$disk ($size)"
+        fi
+    done
+    echo ""
+}
+
+# Backup konfigurací před formátováním
+backup_before_format() {
+    local backup_dir="/tmp/ha_backup_$(date +%Y%m%d_%H%M%S)"
+    
+    log info "💾 Zálohování konfigurace do: $backup_dir"
+    
+    mkdir -p "$backup_dir"
+    
+    # Backup Docker volumes
+    if docker volume ls &>/dev/null 2>&1; then
+        log info "Zálohování Docker volumes..."
+        docker volume ls -q | while read vol; do
+            docker run --rm -v "$vol":/data -v "$backup_dir":/backup \
+                alpine tar czf "/backup/$vol.tar.gz" -C /data . 2>/dev/null || true
+        done
+    fi
+    
+    # Backup config adresáře
+    if [ -d "$SCRIPT_DIR/config" ]; then
+        log info "Zálohování config adresáře..."
+        tar czf "$backup_dir/config.tar.gz" -C "$SCRIPT_DIR" config 2>/dev/null || true
+    fi
+    
+    log success "Backup hotov: $backup_dir"
+    echo "$backup_dir"
+}
+
+# Formátování disku s bezpečnostním potvrzením
+format_disk() {
+    local disk="$1"
+    local filesystem="${2:-ext4}"
+    
+    if [ -z "$disk" ] || [ -z "$filesystem" ]; then
+        log error "Použití: format_disk /dev/sdX [ext4|btrfs|xfs]"
+        return 1
+    fi
+    
+    # Bezpečnostní checks
+    if [ ! -b "$disk" ]; then
+        log error "Zařízení $disk neexistuje"
+        return 1
+    fi
+    
+    if mount | grep -q "$disk"; then
+        log error "$disk je připojeno, nelze formátovat"
+        log info "Odpojte zařízení: sudo umount $disk*"
+        return 1
+    fi
+    
+    # Potvrzení
+    echo ""
+    log warn "⚠️  POZOR: Formátování SMAŽE všechna data na $disk"
+    echo ""
+    read -p "Opravdu chcete formátovat $disk na $filesystem? Zadejte 'ano' pro potvrzení: " confirm
+    
+    if [ "$confirm" != "ano" ]; then
+        log warn "Formátování zrušeno"
+        return 1
+    fi
+    
+    log info "Formátování $disk na $filesystem..."
+    
+    # Formátování
+    case "$filesystem" in
+        ext4)
+            sudo mkfs.ext4 -F -L "ha_data" "$disk" || { log error "Formátování selhalo"; return 1; }
+            ;;
+        btrfs)
+            sudo mkfs.btrfs -f -L "ha_data" "$disk" || { log error "Formátování selhalo"; return 1; }
+            ;;
+        xfs)
+            sudo mkfs.xfs -f -L "ha_data" "$disk" || { log error "Formátování selhalo"; return 1; }
+            ;;
+        *)
+            log error "Neznámý filesystem: $filesystem"
+            return 1
+            ;;
+    esac
+    
+    log success "Disk $disk formátován na $filesystem"
+    return 0
+}
+
+# Připojení disku
+mount_disk() {
+    local disk="$1"
+    local mount_point="${2:-/mnt/ha_data}"
+    
+    if [ -z "$disk" ]; then
+        log error "Použití: mount_disk /dev/sdX [/mount/point]"
+        return 1
+    fi
+    
+    if [ ! -b "$disk" ]; then
+        log error "Zařízení $disk neexistuje"
+        return 1
+    fi
+    
+    # Vytvoření mount pointu
+    sudo mkdir -p "$mount_point"
+    
+    # Připojení
+    log info "Připojuji $disk na $mount_point..."
+    if sudo mount "$disk" "$mount_point"; then
+        log success "Disk připojen: $disk → $mount_point"
+        
+        # Trvalé připojení přes /etc/fstab
+        local uuid
+        uuid=$(sudo blkid -s UUID -o value "$disk")
+        
+        if [ -n "$uuid" ]; then
+            if ! grep -q "$uuid" /etc/fstab; then
+                log info "Přidávání do /etc/fstab pro trvalé připojení..."
+                echo "UUID=$uuid $mount_point auto defaults,nofail,x-systemd.device-timeout=5 0 2" | sudo tee -a /etc/fstab >/dev/null
+                log success "Přidáno do /etc/fstab"
+            fi
+        fi
+        
+        return 0
+    else
+        log error "Připojení selhalo"
+        return 1
+    fi
+}
+
+# Migrace z jednoho typu instalace do druhého
+migrate_ha_installation() {
+    log info "════════════════════════════════════════════════════"
+    log info "🔄 MIGRACE HOME ASSISTANT INSTALACE"
+    log info "════════════════════════════════════════════════════"
+    
+    # Detekce typu
+    local current_type
+    current_type=$(detect_ha_installation_type)
+    
+    echo ""
+    echo "Dostupné cílové instalace:"
+    echo "  1) Docker (doporučeno pro RPi5)"
+    echo "  2) Systemd"
+    echo "  3) Home Assistant Supervised"
+    echo ""
+    
+    read -p "Vyberte cílový typ instalace [1-3]: " target_choice
+    
+    local target_type
+    case "$target_choice" in
+        1) target_type="docker" ;;
+        2) target_type="systemd" ;;
+        3) target_type="supervised" ;;
+        *) log error "Neplatná volba"; return 1 ;;
+    esac
+    
+    if [ "$current_type" = "$target_type" ]; then
+        log warn "Instalace je již typu: $target_type"
+        return 0
+    fi
+    
+    # Backup
+    local backup_dir
+    backup_dir=$(backup_before_format)
+    
+    log info "Migrování z $current_type na $target_type..."
+    
+    case "$current_type" in
+        systemd)
+            log info "Zastavuji systemd Home Assistant..."
+            sudo systemctl stop homeassistant 2>/dev/null || true
+            ;;
+        docker)
+            log info "Zastavuji Docker kontejnery..."
+            docker-compose down 2>/dev/null || true
+            ;;
+        supervised)
+            log info "Zastavuji Supervised Home Assistant..."
+            sudo systemctl stop homeassistant 2>/dev/null || true
+            ;;
+    esac
+    
+    # Migrační proces podle cíle
+    case "$target_type" in
+        docker)
+            log info "Nastavuji Docker instalaci..."
+            start_docker_containers
+            ;;
+        systemd)
+            log info "Nastavuji Systemd instalaci..."
+            log warn "Systemd instalace vyžaduje manuální konfiguraci"
+            ;;
+        supervised)
+            log info "Nastavuji Supervised instalaci..."
+            log warn "Supervised instalace vyžaduje manuální konfiguraci"
+            ;;
+    esac
+    
+    log success "Migrace hotova"
+    log info "Backup uložen v: $backup_dir"
+    return 0
+}
+
+# Rozšíření disku pro Raspberry Pi
+expand_partition() {
+    log info "📈 Rozšíření oddílu na plnou velikost disku..."
+    
+    # Zjistit hlavní oddíl
+    local root_partition
+    root_partition=$(df / | tail -1 | awk '{print $1}')
+    
+    log info "Zvětšuji oddíl: $root_partition"
+    
+    if [ -z "$root_partition" ]; then
+        log error "Nelze detekovat root oddíl"
+        return 1
+    fi
+    
+    # Rozšíření oddílu
+    if sudo parted -m "$root_partition" unit % resizepart 1 100 2>/dev/null || \
+       sudo resize2fs "$root_partition" 2>/dev/null; then
+        log success "Oddíl rozšířen"
+        
+        # Ověření
+        local new_size
+        new_size=$(df / | tail -1 | awk '{print $2}')
+        log info "Nová velikost: $new_size"
+        
+        return 0
+    else
+        log error "Rozšíření selhalo"
+        return 1
+    fi
+}
+
+# Interaktivní menu pro OS a migraci
+os_management_menu() {
+    while true; do
+        echo ""
+        echo -e "${CYAN}🖥️  SPRÁVA OS A MIGRACE${NC}"
+        echo "  1) Detekovat typ Home Assistant instalace"
+        echo "  2) Detekovat OS variantu"
+        echo "  3) Vypsat dostupné disky"
+        echo "  4) Formátovat disk"
+        echo "  5) Připojit disk"
+        echo "  6) Rozšířit partition (RPi)"
+        echo "  7) Migrovat Home Assistant instalaci"
+        echo "  8) Zpět na hlavní menu"
+        echo ""
+        
+        read -p "Vyberte [1-8]: " os_choice
+        
+        case "$os_choice" in
+            1) detect_ha_installation_type ;;
+            2) detect_os_variant ;;
+            3) list_available_disks ;;
+            4)
+                list_available_disks
+                read -p "Zadejte zařízení (např /dev/sda): " device
+                read -p "Vyberte filesystem [ext4/btrfs/xfs] (default: ext4): " fs
+                format_disk "$device" "${fs:-ext4}"
+                ;;
+            5)
+                list_available_disks
+                read -p "Zadejte zařízení (např /dev/sda1): " device
+                read -p "Zadejte mount point (default: /mnt/ha_data): " mnt
+                mount_disk "$device" "${mnt:-/mnt/ha_data}"
+                ;;
+            6) expand_partition ;;
+            7) migrate_ha_installation ;;
+            8) break ;;
+            *) log warn "Neplatná volba" ;;
+        esac
+        
+        read -p "Stiskněte Enter pro pokračování..."
+    done
+}
 
 # Hlavní menu
 show_menu() {
@@ -500,7 +841,7 @@ show_menu() {
     echo ""
     echo "  📦 ZÁKLADNÍ FUNKCE:"
     echo "     1) Kompletní instalace (doporučeno)"
-    echo "     2) Apenas Docker komponenty"
+    echo "     2) Pouze Docker komponenty"
     echo "     3) Kontrola a oprava YAML"
     echo "     4) Synchronizace konfigurace"
     echo ""
@@ -510,13 +851,17 @@ show_menu() {
     echo "     7) Oprava běžných problémů"
     echo "     8) Čištění a optimalizace"
     echo ""
-    echo "  🛠️  POKROČILÉ:"
-    echo "     9) Zobrazit logy"
-    echo "    10) Restart Docker služeb"
-    echo "    11) Interaktivní diagnóza"
+    echo "  � OS A ÚLOŽIŠTĚ:"
+    echo "     9) Správa OS a migrace"
+    echo "    10) Backup konfigurace"
+    echo ""
+    echo "  �🛠️  POKROČILÉ:"
+    echo "    11) Zobrazit logy"
+    echo "    12) Restart Docker služeb"
+    echo "    13) Interaktivní diagnóza"
     echo ""
     echo "  ❌ UKONČIT:"
-    echo "    12) Ukončit"
+    echo "    14) Ukončit"
     echo ""
     echo -e "${CYAN}════════════════════════════════════════════════════════════${NC}"
     echo ""
@@ -951,27 +1296,23 @@ main() {
                 read -p "Stiskněte Enter pro pokračování..."
                 ;;
             9)
-                log "Spuštění kontroly systémových souborů..."
-                if [ -x "./scripts/system_check.sh" ]; then
-                    ./scripts/system_check.sh
-                else
-                    log "❌ system_check.sh nebyl nalezen"
-                fi
+                os_management_menu
                 ;;
             10)
-                log "Výběr verze instalace..."
-                if [ -x "./scripts/system_check.sh" ]; then
-                    version=$("./scripts/system_check.sh" 9 2>/dev/null || echo "")
-                    if [ -n "$version" ]; then
-                        log "Vybrána verze: $version"
-                    fi
-                else
-                    log "❌ system_check.sh nebyl nalezen"
-                fi
+                backup_before_format
                 read -p "Stiskněte Enter pro pokračování..."
                 ;;
             11)
-                log "Ukončování..."
+                show_logs
+                ;;
+            12)
+                restart_docker
+                ;;
+            13)
+                interactive_diagnostics
+                ;;
+            14)
+                log info "Ukončování..."
                 exit 0
                 ;;
             *)
