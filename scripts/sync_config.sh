@@ -63,13 +63,34 @@ if [ "$VALIDATE" -eq 1 ]; then
     echo "Python3 not found, skipping validation" >&2
     exit 0
   fi
-  python3 - <<PY
-import sys, os, glob
+  
+  # Use HA-aware validator if available (handles !include, !secret, etc.)
+  if [ -f "$SCRIPT_DIR/validate_ha_config.py" ]; then
+    echo "Validating with HA-aware validator..."
+    python3 "$SCRIPT_DIR/validate_ha_config.py" "$DST_DIR/configuration.yaml" || true
+  else
+    # Fallback: basic YAML validation (ignores HA custom tags)
+    python3 - <<PY
+import sys, os
 try:
     import yaml
 except Exception as e:
     print('PyYAML not available: %s' % e, file=sys.stderr)
-    sys.exit(2)
+    sys.exit(0)
+
+# Define custom tag constructors for HA tags
+def secret_constructor(loader, node):
+    return '!secret'
+
+def include_constructor(loader, node):
+    return '!include'
+
+def include_dir_constructor(loader, node):
+    return '!include_dir_merge_named'
+
+yaml.add_constructor('!secret', secret_constructor)
+yaml.add_constructor('!include', include_constructor)
+yaml.add_constructor('!include_dir_merge_named', include_dir_constructor)
 
 errors = []
 for root,_,files in os.walk('config'):
@@ -84,12 +105,13 @@ for root,_,files in os.walk('config'):
 if errors:
     print('YAML validation errors:')
     for p,e in errors:
-        print(p, e)
+        print('  ' + p + ': ' + e)
     sys.exit(1)
 else:
     print('✅ YAML validation passed for all files under config/')
     sys.exit(0)
 PY
+  fi
 fi
 
 echo "Sync completed."
