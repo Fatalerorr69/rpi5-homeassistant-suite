@@ -1,20 +1,25 @@
 # Home Assistant Configuration
 # RPi5 Home Assistant Suite v2.4.0-rc
-# Source: CONFIG/configuration.yaml → config/configuration.yaml
+# Auto-generated configuration - Customizable
 
 homeassistant:
-  name: Home Assistant
+  name: Home
   latitude: 50.08
   longitude: 14.44
   elevation: 365
   unit_system: metric
   time_zone: Europe/Prague
+  
+  # Packages configuration
   packages: !include_dir_merge_named packages
+  
+  # Authentication
   auth_providers:
     - type: homeassistant
     - type: trusted_networks
       trusted_networks:
         - 192.168.1.0/24
+        - 127.0.0.1
 
 # ============================================================================
 # DEFAULT CONFIGURATION
@@ -39,52 +44,78 @@ http:
 logger:
   default: info
   logs:
-    custom_components.hacs: debug
     homeassistant.components.mqtt: debug
+    custom_components.hacs: debug
 
 # ============================================================================
-# MQTT (Mosquitto over Docker network)
+# MQTT (Mosquitto)
 # ============================================================================
 mqtt:
   broker: mosquitto
   port: 1883
   discovery: true
   discovery_prefix: homeassistant
+  
+  # Credentials from secrets.yaml
+  username: !secret mqtt_username
+  password: !secret mqtt_password
+  
+  # Client settings
   client_id: homeassistant
   keepalive: 60
   protocol: 3.1.1
 
 # ============================================================================
+# TEMPLATE SENSORS
+# ============================================================================
+template: !include templates.yaml
+
+# ============================================================================
+# SCRIPTS
+# ============================================================================
+script: !include scripts.yaml
+
+# ============================================================================
+# AUTOMATION
+# ============================================================================
+automation: !include automations.yaml
+
+# ============================================================================
 # FRONTEND & LOVELACE
 # ============================================================================
 frontend:
+  themes: !include_dir_merge_named themes
 
 lovelace:
   mode: yaml
-
-# ============================================================================
-# TEMPLATES, SCRIPTS, AUTOMATIONS
-# ============================================================================
-template: !include templates.yaml
-script: !include scripts.yaml
-automation: !include automations.yaml
+  resources:
+    - url: /hacsfiles/lovelace-card-mod/card-mod.js
+      type: module
 
 # ============================================================================
 # RECORDER & DATABASE
 # ============================================================================
 recorder:
+  db_url: !secret recorder_db_url
   purge_keep_days: 10
   auto_purge: true
+  commit_interval: 30
+  exclude:
+    domains:
+      - automation
+      - script
+    entity_globs:
+      - sensor.time_*
 
 # ============================================================================
-# HISTORY & LOGBOOK
+# HISTORY & STATISTICS
 # ============================================================================
 history:
 
 logbook:
 
 # ============================================================================
-# INTEGRATIONS
+# CORE INTEGRATIONS
 # ============================================================================
 sun:
 

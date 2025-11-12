@@ -1,0 +1,43 @@
+- sensor:
+    - name: "Průměrná teplota v domě"
+      unique_id: average_house_temperature
+      unit_of_measurement: "°C"
+      state: >
+        {% set temps = [
+          states('sensor.living_room_temperature'),
+          states('sensor.bedroom_temperature'), 
+          states('sensor.kitchen_temperature')
+        ] %}
+        {% set valid_temps = temps | select('defined') | map('float') | list %}
+        {{ (valid_temps | sum / valid_temps | count) | round(1) if valid_temps else 0 }}
+
+    - name: "Počet zapnutých světel"
+      unique_id: lights_on_count
+      state: >
+        {{ states.light | selectattr('state','eq','on') | list | count }}
+
+    - name: "Denní fáze"
+      unique_id: day_phase
+      state: >
+        {% if states('sun.sun') == 'below_horizon' %}
+          Noc
+        {% else %}
+          Den
+        {% endif %}
+
+    - name: "Stav zabezpečení domu"
+      unique_id: house_security_status
+      state: >
+        {% if states('alarm_control_panel.house') == 'armed_away' %}
+          Aktivní
+        {% elif states('lock.front_door') == 'locked' and states('lock.back_door') == 'locked' %}
+          Zabezpečeno
+        {% else %}
+          Otevřeno
+        {% endif %}
+
+- binary_sensor:
+    - name: "Někdo je doma"
+      unique_id: someone_home
+      state: >
+        {{ states.person | selectattr('state','eq','home') | list | count > 0 }}
